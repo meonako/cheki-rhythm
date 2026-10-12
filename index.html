@@ -278,7 +278,6 @@ function generatePattern(duration, bpm, offset, seed) {
 }
 
 let isPlaying = false;
-let startTime = 0;
 let score = 0;
 let combo = 0;
 let maxCombo = 0;
@@ -287,7 +286,7 @@ let greatCount = 0;
 let missCount = 0;
 let activeNotes = [];
 let effects = [];
-let ripples = []; // 터치/히트 시 퍼지는 원형 파동 효과 배열
+let ripples = [];
 
 function goToSongSelect() {
   document.getElementById('start-screen').classList.add('hidden');
@@ -335,7 +334,6 @@ function startGame(songKey) {
   currentBgm.onended = () => { endGame(); };
 
   isPlaying = true;
-  startTime = performance.now();
   requestAnimationFrame(gameLoop);
 }
 
@@ -352,7 +350,6 @@ function addEffect(lane, text) {
     alpha: 1.0
   });
 
-  // 터치/판정 순간 레인 위치에 사이버틱한 리플(파동) 생성
   ripples.push({
     x: lane * laneWidth + laneWidth / 2,
     y: judgeLineY,
@@ -363,7 +360,7 @@ function addEffect(lane, text) {
   });
 }
 
-function gameLoop(timestamp) {
+function gameLoop() {
   if (!isPlaying) return;
 
   const currentTime = currentBgm.currentTime;
@@ -375,7 +372,7 @@ function gameLoop(timestamp) {
 
   ctx.clearRect(0, 0, width, height);
 
-  // 1. 배경 렌더링
+  // 배경 렌더링
   if (isBgLoaded) {
     ctx.drawImage(bgImage, 0, 0, width, height);
     ctx.fillStyle = 'rgba(0, 0, 0, 0.65)';
@@ -385,7 +382,7 @@ function gameLoop(timestamp) {
     ctx.fillRect(0, 0, width, height);
   }
 
-  // 2. 사이버틱한 레인 배경 그라데이션 및 구분선
+  // 사이버틱 레인 배경 그라데이션 및 구분선
   for (let i = 0; i < 4; i++) {
     const laneX = i * laneWidth;
     const laneGrad = ctx.createLinearGradient(laneX, 0, laneX, height);
@@ -400,7 +397,6 @@ function gameLoop(timestamp) {
     ctx.fillRect(laneX, 0, laneWidth, height);
   }
 
-  // 레인 경계선 (네온 글로우)
   ctx.shadowColor = '#FF69C7';
   ctx.shadowBlur = 8;
   ctx.strokeStyle = 'rgba(255, 105, 199, 0.4)';
@@ -413,7 +409,7 @@ function gameLoop(timestamp) {
   }
   ctx.shadowBlur = 0;
 
-  // 3. 판정선 및 하단 버튼 가이드 (사이버틱 네온 바)
+  // 판정선
   ctx.save();
   ctx.shadowColor = '#00fff2';
   ctx.shadowBlur = 15;
@@ -425,9 +421,8 @@ function gameLoop(timestamp) {
   ctx.stroke();
   ctx.restore();
 
-  // 하단 각 레인별 터치 반응 버튼 홀더 (동그란 테두리)
+  // 하단 버튼 홀더
   for (let i = 0; i < 4; i++) {
-    const hx = i * laneWidth + laneWidth / 2;
     ctx.save();
     ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
     ctx.lineWidth = 2;
@@ -437,7 +432,7 @@ function gameLoop(timestamp) {
     ctx.restore();
   }
 
-  // 4. 리플(Ripple) 이펙트 렌더링
+  // 리플 효과
   for (let i = ripples.length - 1; i >= 0; i--) {
     const rip = ripples[i];
     ctx.save();
@@ -458,7 +453,7 @@ function gameLoop(timestamp) {
     }
   }
 
-  // 5. 2D 캡슐형 노트 렌더링
+  // 2D 캡슐형 노트 렌더링
   activeNotes.forEach(note => {
     if (note.hit) return;
 
@@ -478,7 +473,6 @@ function gameLoop(timestamp) {
       const x = note.lane * laneWidth + 8;
       const w = laneWidth - 16;
       
-      // 레인별 캡슐 색상 분기 (사이버틱한 블루/핑크 네온 조합)
       const isPink = (note.lane === 1 || note.lane === 2);
       const mainColor = isPink ? '#FF69C7' : '#00fff2';
       const glowColor = isPink ? '#ffc0eb' : '#a0f9ff';
@@ -487,7 +481,6 @@ function gameLoop(timestamp) {
       ctx.shadowColor = mainColor;
       ctx.shadowBlur = 18;
 
-      // 캡슐 몸체 그라데이션
       const grad = ctx.createLinearGradient(x, noteY - noteHeight/2, x, noteY + noteHeight/2);
       grad.addColorStop(0, glowColor);
       grad.addColorStop(0.5, mainColor);
@@ -498,7 +491,6 @@ function gameLoop(timestamp) {
       ctx.roundRect(x, noteY - noteHeight / 2, w, noteHeight, 11);
       ctx.fill();
 
-      // 내부 광채 디테일 라인
       ctx.strokeStyle = '#ffffff';
       ctx.lineWidth = 1.5;
       ctx.beginPath();
@@ -509,7 +501,7 @@ function gameLoop(timestamp) {
     }
   });
 
-  // 6. 판정 텍스트 이펙트 렌더링
+  // 판정 텍스트
   for (let i = effects.length - 1; i >= 0; i--) {
     const eff = effects[i];
     ctx.save();
@@ -544,7 +536,6 @@ function triggerInput(lane) {
   const currentTime = currentBgm.currentTime;
   const target = activeNotes.find(n => n.lane === lane && !n.hit && !n.missed);
 
-  // 누를 때마다 빈 공간에도 가벼운 터치 리플 효과 생성
   ripples.push({
     x: lane * laneWidth + laneWidth / 2,
     y: judgeLineY,
