@@ -287,6 +287,7 @@ let missCount = 0;
 let activeNotes = [];
 let effects = [];
 let ripples = [];
+let sparkParticles = []; // 클릭 시 터지는 별/스파크 파티클 배열
 
 function goToSongSelect() {
   document.getElementById('start-screen').classList.add('hidden');
@@ -307,6 +308,7 @@ function startGame(songKey) {
   missCount = 0;
   effects = [];
   ripples = [];
+  sparkParticles = [];
   
   isBgLoaded = false;
   bgImage.src = selectedSong.bg;
@@ -342,22 +344,75 @@ function updateHUD() {
   document.getElementById('combo').innerText = combo;
 }
 
+// 캔버스에 별(Star) 모양을 그려주는 함수
+function drawStarShape(ctx, cx, cy, spikes, outerRadius, innerRadius) {
+  let rot = Math.PI / 2 * 3;
+  let x = cx;
+  let y = cy;
+  let step = Math.PI / spikes;
+
+  ctx.beginPath();
+  ctx.moveTo(cx, cy - outerRadius);
+  for (let i = 0; i < spikes; i++) {
+    x = cx + Math.cos(rot) * outerRadius;
+    y = cy + Math.sin(rot) * outerRadius;
+    ctx.lineTo(x, y);
+    rot += step;
+
+    x = cx + Math.cos(rot) * innerRadius;
+    y = cy + Math.sin(rot) * innerRadius;
+    ctx.lineTo(x, y);
+    rot += step;
+  }
+  ctx.lineTo(cx, cy - outerRadius);
+  ctx.closePath();
+  ctx.fill();
+}
+
 function addEffect(lane, text) {
   effects.push({
     x: lane * laneWidth + laneWidth / 2,
-    y: judgeLineY - 35,
+    y: judgeLineY - 40,
     text: text,
     alpha: 1.0
   });
 
+  const laneCenterX = lane * laneWidth + laneWidth / 2;
+  const themeColor = (lane === 0 || lane === 3) ? '#00fff2' : '#FF69C7';
+
+  // 1. 겹겹이 퍼지는 네온 파동 (Ripple) 추가
   ripples.push({
-    x: lane * laneWidth + laneWidth / 2,
+    x: laneCenterX,
     y: judgeLineY,
     radius: 10,
-    maxRadius: 60,
-    alpha: 0.8,
-    color: (lane === 0 || lane === 3) ? '#00fff2' : '#FF69C7'
+    maxRadius: 75,
+    alpha: 0.9,
+    color: themeColor
   });
+  ripples.push({
+    x: laneCenterX,
+    y: judgeLineY,
+    radius: 5,
+    maxRadius: 50,
+    alpha: 0.7,
+    color: '#ffffff'
+  });
+
+  // 2. 이미지처럼 사방으로 팡팡 튀어나오는 별(Star) 및 스파크 파티클 생성
+  for (let i = 0; i < 10; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const speed = 2 + Math.random() * 5;
+    sparkParticles.push({
+      x: laneCenterX,
+      y: judgeLineY,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed - 1, // 위로 살짝 뜨는 힘
+      alpha: 1.0,
+      size: 3 + Math.random() * 6,
+      isStar: Math.random() < 0.6, // 60% 확률로 별 모양, 나머지는 빛나는 점
+      color: Math.random() < 0.5 ? themeColor : '#ffffff'
+    });
+  }
 }
 
 function gameLoop() {
@@ -375,7 +430,7 @@ function gameLoop() {
   // 배경 렌더링
   if (isBgLoaded) {
     ctx.drawImage(bgImage, 0, 0, width, height);
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.65)';
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
     ctx.fillRect(0, 0, width, height);
   } else {
     ctx.fillStyle = '#000000';
@@ -387,19 +442,19 @@ function gameLoop() {
     const laneX = i * laneWidth;
     const laneGrad = ctx.createLinearGradient(laneX, 0, laneX, height);
     if (i % 2 === 0) {
-      laneGrad.addColorStop(0, 'rgba(0, 255, 242, 0.03)');
-      laneGrad.addColorStop(1, 'rgba(0, 255, 242, 0.12)');
+      laneGrad.addColorStop(0, 'rgba(0, 255, 242, 0.05)');
+      laneGrad.addColorStop(1, 'rgba(0, 255, 242, 0.18)');
     } else {
-      laneGrad.addColorStop(0, 'rgba(255, 105, 199, 0.03)');
-      laneGrad.addColorStop(1, 'rgba(255, 105, 199, 0.12)');
+      laneGrad.addColorStop(0, 'rgba(255, 105, 199, 0.05)');
+      laneGrad.addColorStop(1, 'rgba(255, 105, 199, 0.18)');
     }
     ctx.fillStyle = laneGrad;
     ctx.fillRect(laneX, 0, laneWidth, height);
   }
 
   ctx.shadowColor = '#FF69C7';
-  ctx.shadowBlur = 8;
-  ctx.strokeStyle = 'rgba(255, 105, 199, 0.4)';
+  ctx.shadowBlur = 10;
+  ctx.strokeStyle = 'rgba(255, 105, 199, 0.5)';
   ctx.lineWidth = 2;
   for (let i = 1; i < 4; i++) {
     ctx.beginPath();
@@ -409,51 +464,79 @@ function gameLoop() {
   }
   ctx.shadowBlur = 0;
 
-  // 판정선
+  // 판정선 (강력한 네온 글로우)
   ctx.save();
   ctx.shadowColor = '#00fff2';
-  ctx.shadowBlur = 15;
+  ctx.shadowBlur = 20;
   ctx.strokeStyle = '#00fff2';
-  ctx.lineWidth = 4;
+  ctx.lineWidth = 5;
   ctx.beginPath();
   ctx.moveTo(0, judgeLineY);
   ctx.lineTo(width, judgeLineY);
   ctx.stroke();
   ctx.restore();
 
-  // 하단 버튼 홀더
+  // 하단 버튼 홀더 (빛나는 원형 버튼 테두리)
   for (let i = 0; i < 4; i++) {
     ctx.save();
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
-    ctx.lineWidth = 2;
+    ctx.shadowColor = (i === 0 || i === 3) ? '#00fff2' : '#FF69C7';
+    ctx.shadowBlur = 12;
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 2.5;
     ctx.beginPath();
-    ctx.roundRect(i * laneWidth + 8, judgeLineY - 22, laneWidth - 16, 44, 22);
+    ctx.roundRect(i * laneWidth + 6, judgeLineY - 24, laneWidth - 12, 48, 24);
     ctx.stroke();
     ctx.restore();
   }
 
-  // 리플 효과
+  // 겹겹이 퍼지는 네온 파동(Ripple) 효과 렌더링
   for (let i = ripples.length - 1; i >= 0; i--) {
     const rip = ripples[i];
     ctx.save();
     ctx.strokeStyle = rip.color;
     ctx.shadowColor = rip.color;
-    ctx.shadowBlur = 10;
-    ctx.lineWidth = 3;
+    ctx.shadowBlur = 15;
+    ctx.lineWidth = 3.5;
     ctx.globalAlpha = rip.alpha;
     ctx.beginPath();
     ctx.arc(rip.x, rip.y, rip.radius, 0, Math.PI * 2);
     ctx.stroke();
     ctx.restore();
 
-    rip.radius += 2.5;
-    rip.alpha -= 0.05;
+    rip.radius += 3.0;
+    rip.alpha -= 0.04;
     if (rip.alpha <= 0 || rip.radius >= rip.maxRadius) {
       ripples.splice(i, 1);
     }
   }
 
-  // 2D 캡슐형 노트 렌더링
+  // 별 및 스파크 파티클 렌더링
+  for (let i = sparkParticles.length - 1; i >= 0; i--) {
+    const p = sparkParticles[i];
+    ctx.save();
+    ctx.globalAlpha = p.alpha;
+    ctx.fillStyle = p.color;
+    ctx.shadowColor = p.color;
+    ctx.shadowBlur = 12;
+
+    if (p.isStar) {
+      drawStarShape(ctx, p.x, p.y, 4, p.size, p.size / 2);
+    } else {
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.size / 2, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+
+    p.x += p.vx;
+    p.y += p.vy;
+    p.alpha -= 0.035;
+    if (p.alpha <= 0) {
+      sparkParticles.splice(i, 1);
+    }
+  }
+
+  // 2D 캡슐형 노트 렌더링 (더 선명하고 입체감 있는 네온 처리)
   activeNotes.forEach(note => {
     if (note.hit) return;
 
@@ -479,12 +562,12 @@ function gameLoop() {
 
       ctx.save();
       ctx.shadowColor = mainColor;
-      ctx.shadowBlur = 18;
+      ctx.shadowBlur = 20;
 
       const grad = ctx.createLinearGradient(x, noteY - noteHeight/2, x, noteY + noteHeight/2);
       grad.addColorStop(0, glowColor);
       grad.addColorStop(0.5, mainColor);
-      grad.addColorStop(1, '#111111');
+      grad.addColorStop(1, '#000000');
 
       ctx.fillStyle = grad;
       ctx.beginPath();
@@ -492,7 +575,7 @@ function gameLoop() {
       ctx.fill();
 
       ctx.strokeStyle = '#ffffff';
-      ctx.lineWidth = 1.5;
+      ctx.lineWidth = 1.8;
       ctx.beginPath();
       ctx.roundRect(x + 2, noteY - noteHeight / 2 + 2, w - 4, noteHeight / 2 - 2, 6);
       ctx.stroke();
@@ -501,11 +584,11 @@ function gameLoop() {
     }
   });
 
-  // 판정 텍스트
+  // 판정 텍스트 렌더링
   for (let i = effects.length - 1; i >= 0; i--) {
     const eff = effects[i];
     ctx.save();
-    ctx.font = 'bold 13px "Press Start 2P"';
+    ctx.font = 'bold 14px "Press Start 2P"';
     ctx.textAlign = 'center';
     
     if (eff.text === 'MISS') {
@@ -518,7 +601,7 @@ function gameLoop() {
       ctx.fillStyle = `rgba(0, 255, 242, ${eff.alpha})`;
       ctx.shadowColor = '#00fff2';
     }
-    ctx.shadowBlur = 10;
+    ctx.shadowBlur = 15;
     ctx.fillText(eff.text, eff.x, eff.y);
     ctx.restore();
 
@@ -536,11 +619,13 @@ function triggerInput(lane) {
   const currentTime = currentBgm.currentTime;
   const target = activeNotes.find(n => n.lane === lane && !n.hit && !n.missed);
 
+  // 빈 공간을 누를 때도 가벼운 파동과 스파크 제공
+  const laneCenterX = lane * laneWidth + laneWidth / 2;
   ripples.push({
-    x: lane * laneWidth + laneWidth / 2,
+    x: laneCenterX,
     y: judgeLineY,
     radius: 5,
-    maxRadius: 40,
+    maxRadius: 35,
     alpha: 0.5,
     color: '#ffffff'
   });
