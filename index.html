@@ -1,1 +1,675 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>82 Rhythm</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
 
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    body {
+      background-color: #000000;
+      color: #ffffff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      min-height: 100dvh;
+      overflow: hidden;
+      font-family: 'Press Start 2P', cursive;
+    }
+
+    #game-container {
+      position: relative;
+      width: 100%;
+      max-width: 430px;
+      height: 100vh;
+      height: 100dvh;
+      background-color: #000000;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      border: 2px solid #FF69C7;
+      box-shadow: 0 0 20px rgba(255, 105, 199, 0.4);
+    }
+
+    #hud {
+      position: relative;
+      height: 45px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 15px;
+      background-color: #000000;
+      border-bottom: 2px solid #FDC7FB;
+      font-size: 0.7rem;
+      z-index: 10;
+      flex-shrink: 0;
+    }
+
+    #score { color: #ffd700; }
+    #combo { color: #fcd3f2; }
+
+    #canvas-wrapper {
+      position: relative;
+      width: 100%;
+      height: calc(100% - 45px);
+      background-color: #000000;
+      overflow: hidden;
+    }
+
+    canvas {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      display: block;
+      touch-action: none;
+      background-color: #000000;
+      z-index: 2;
+    }
+
+    .screen {
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0, 0, 0, 0.95); 
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      padding: 20px;
+      z-index: 999;
+    }
+
+    .hidden { display: none !important; }
+
+    h1 {
+      color: #fcd3f2;
+      font-size: 2.0rem;
+      margin-bottom: 15px;
+      line-height: 1.5;
+      text-shadow: 3px 3px #FF69C7;
+    }
+
+    .start-btn {
+      background-color: transparent;
+      color: #ffffff;
+      border: none;
+      padding: 12px 20px;
+      font-size: 0.9rem;
+      cursor: pointer;
+      font-family: 'Press Start 2P', cursive;
+      margin: 8px 0;
+      transition: 0.1s;
+    }
+
+    .start-btn:hover, .start-btn:active {
+      color: #FF69C7;
+      transform: scale(1.05);
+    }
+     
+    h2 {
+      color: #ffffff;
+      font-size: 0.75rem;
+      margin-bottom: 25px;
+    }
+
+    .song-select-btn {
+      background-color: transparent;
+      color: #ffffff;
+      border: none;
+      font-family: 'Press Start 2P', sans-serif;
+      font-size: 1.0rem;
+      cursor: pointer;
+      margin-bottom: 20px;
+      padding: 10px;
+      word-break: keep-all;
+      transition: color 0.1s, transform 0.1s;
+    }
+
+    .song-select-btn:hover, .song-select-btn:active {
+      color: #FF69C7;
+      transform: scale(1.05);
+    }
+  </style>
+</head>
+<body>
+
+<div id="game-container">
+  <div id="hud">
+    <div>SCORE: <span id="score">000000</span></div>
+    <div><span id="combo">0</span> COMBO</div>
+  </div>
+
+  <div id="canvas-wrapper">
+    <canvas id="gameCanvas"></canvas>
+
+    <!-- 1단계: 시작 화면 -->
+    <div id="start-screen" class="screen">
+      <h1>82 RHYTHM</h1>
+      <h2>2026 WORK BY YUN</h2>
+      <button id="start-game-btn" class="start-btn">START GAME</button>
+    </div>
+
+    <!-- 2단계: 곡 선택 화면 -->
+    <div id="song-select-screen" class="screen hidden">
+      <h1>SELECT SONG</h1>
+      <h2>CHOOSE YOUR TRACK</h2>
+      
+      <button class="song-select-btn" data-song="gossip">> GOSSIP</button>
+      <button class="song-select-btn" data-song="trembling">> 떨리는 맘</button>
+    </div>
+
+    <!-- 3단계: 랭크/결과 화면 -->
+    <div id="result-screen" class="screen hidden"></div>
+  </div>
+</div>
+
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const wrapper = document.getElementById('canvas-wrapper');
+
+let width, height, laneWidth, judgeLineY;
+
+function resize() {
+  width = canvas.width = wrapper.clientWidth;
+  height = canvas.height = wrapper.clientHeight;
+  laneWidth = width / 4;
+  judgeLineY = height - 105;
+}
+window.addEventListener('resize', resize);
+resize();
+
+const bgImage = new Image();
+let isBgLoaded = false;
+bgImage.onload = () => { isBgLoaded = true; };
+bgImage.src = './cover.png';
+
+const songs = {
+  gossip: {
+    src: './Gossip.mp3',
+    bg: './cover.png',
+    pattern: generatePattern(93.06, 99.38, 3.90, 82)
+  },
+  trembling: {
+    src: './trembling.mp3',
+    bg: './images/Cover2.png',
+    pattern: generatePattern(188.69, 78.30, 0.74, 27)
+  }
+};
+
+let activeSongKey = 'gossip';
+let currentBgm = new Audio();
+const NOTE_SPEED = 550;
+
+function generatePattern(duration, bpm, offset, seed) {
+  const pattern = [];
+  const beat = 60 / bpm;
+  let state = seed >>> 0;
+  let previousLane = -1;
+  let previousDouble = -1;
+
+  function rand() {
+    state = (state * 1664525 + 1013904223) >>> 0;
+    return state / 4294967296;
+  }
+
+  function pickLane(exclude = []) {
+    const choices = [0, 1, 2, 3].filter(
+      lane => !exclude.includes(lane)
+    );
+    return choices[Math.floor(rand() * choices.length)];
+  }
+
+  let beatIndex = 0;
+
+  for (
+    let time = offset;
+    time < duration - 0.2;
+    time += beat, beatIndex++
+  ) {
+    const variation = rand();
+
+    if (variation < 0.10 && beatIndex % 4 !== 0) {
+      continue;
+    }
+
+    const lane = pickLane([previousLane]);
+    pattern.push({ t: time, l: lane });
+    previousLane = lane;
+
+    if (rand() < 0.30) {
+      const offbeat = time + beat / 2;
+
+      if (offbeat < duration - 0.2) {
+        const nextLane = pickLane([previousLane]);
+        pattern.push({ t: offbeat, l: nextLane });
+        previousLane = nextLane;
+      }
+    }
+
+    if (
+      rand() < 0.13 &&
+      beatIndex !== previousDouble
+    ) {
+      const secondLane = pickLane([lane]);
+      pattern.push({ t: time, l: secondLane });
+      previousDouble = beatIndex;
+    }
+  }
+
+  return pattern
+    .sort((a, b) => a.t - b.t || a.l - b.l)
+    .map(note => ({
+      time: Number(note.t.toFixed(3)),
+      lane: note.l
+    }));
+}
+
+let isPlaying = false;
+let startTime = 0;
+let score = 0;
+let combo = 0;
+let maxCombo = 0;
+let perfectCount = 0;
+let greatCount = 0;
+let missCount = 0;
+let activeNotes = [];
+let effects = [];
+let ripples = []; // 터치/히트 시 퍼지는 원형 파동 효과 배열
+
+function goToSongSelect() {
+  document.getElementById('start-screen').classList.add('hidden');
+  document.getElementById('song-select-screen').classList.remove('hidden');
+  document.getElementById('result-screen').classList.add('hidden');
+}
+
+function startGame(songKey) {
+  activeSongKey = songKey;
+  const selectedSong = songs[songKey];
+  if (!selectedSong) return;
+
+  score = 0;
+  combo = 0;
+  maxCombo = 0;
+  perfectCount = 0;
+  greatCount = 0;
+  missCount = 0;
+  effects = [];
+  ripples = [];
+  
+  isBgLoaded = false;
+  bgImage.src = selectedSong.bg;
+  bgImage.onload = () => { isBgLoaded = true; };
+
+  activeNotes = selectedSong.pattern.map(n => ({ ...n, hit: false, missed: false }));
+  
+  document.getElementById('start-screen').classList.add('hidden');
+  document.getElementById('song-select-screen').classList.add('hidden');
+  document.getElementById('result-screen').classList.add('hidden');
+
+  document.getElementById('score').innerText = '000000';
+  document.getElementById('combo').innerText = '0';
+
+  currentBgm.src = selectedSong.src;
+  currentBgm.currentTime = 0;
+  
+  const playPromise = currentBgm.play();
+  if (playPromise !== undefined) {
+    playPromise.catch(error => {
+      console.log("Audio play blocked or loading error:", error);
+    });
+  }
+  
+  currentBgm.onended = () => { endGame(); };
+
+  isPlaying = true;
+  startTime = performance.now();
+  requestAnimationFrame(gameLoop);
+}
+
+function updateHUD() {
+  document.getElementById('score').innerText = String(score).padStart(6, '0');
+  document.getElementById('combo').innerText = combo;
+}
+
+function addEffect(lane, text) {
+  effects.push({
+    x: lane * laneWidth + laneWidth / 2,
+    y: judgeLineY - 35,
+    text: text,
+    alpha: 1.0
+  });
+
+  // 터치/판정 순간 레인 위치에 사이버틱한 리플(파동) 생성
+  ripples.push({
+    x: lane * laneWidth + laneWidth / 2,
+    y: judgeLineY,
+    radius: 10,
+    maxRadius: 60,
+    alpha: 0.8,
+    color: (lane === 0 || lane === 3) ? '#00fff2' : '#FF69C7'
+  });
+}
+
+function gameLoop(timestamp) {
+  if (!isPlaying) return;
+
+  const currentTime = currentBgm.currentTime;
+
+  if (currentBgm.ended || currentTime >= currentBgm.duration) {
+    endGame();
+    return;
+  }
+
+  ctx.clearRect(0, 0, width, height);
+
+  // 1. 배경 렌더링
+  if (isBgLoaded) {
+    ctx.drawImage(bgImage, 0, 0, width, height);
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.65)';
+    ctx.fillRect(0, 0, width, height);
+  } else {
+    ctx.fillStyle = '#000000';
+    ctx.fillRect(0, 0, width, height);
+  }
+
+  // 2. 사이버틱한 레인 배경 그라데이션 및 구분선
+  for (let i = 0; i < 4; i++) {
+    const laneX = i * laneWidth;
+    const laneGrad = ctx.createLinearGradient(laneX, 0, laneX, height);
+    if (i % 2 === 0) {
+      laneGrad.addColorStop(0, 'rgba(0, 255, 242, 0.03)');
+      laneGrad.addColorStop(1, 'rgba(0, 255, 242, 0.12)');
+    } else {
+      laneGrad.addColorStop(0, 'rgba(255, 105, 199, 0.03)');
+      laneGrad.addColorStop(1, 'rgba(255, 105, 199, 0.12)');
+    }
+    ctx.fillStyle = laneGrad;
+    ctx.fillRect(laneX, 0, laneWidth, height);
+  }
+
+  // 레인 경계선 (네온 글로우)
+  ctx.shadowColor = '#FF69C7';
+  ctx.shadowBlur = 8;
+  ctx.strokeStyle = 'rgba(255, 105, 199, 0.4)';
+  ctx.lineWidth = 2;
+  for (let i = 1; i < 4; i++) {
+    ctx.beginPath();
+    ctx.moveTo(i * laneWidth, 0);
+    ctx.lineTo(i * laneWidth, height);
+    ctx.stroke();
+  }
+  ctx.shadowBlur = 0;
+
+  // 3. 판정선 및 하단 버튼 가이드 (사이버틱 네온 바)
+  ctx.save();
+  ctx.shadowColor = '#00fff2';
+  ctx.shadowBlur = 15;
+  ctx.strokeStyle = '#00fff2';
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.moveTo(0, judgeLineY);
+  ctx.lineTo(width, judgeLineY);
+  ctx.stroke();
+  ctx.restore();
+
+  // 하단 각 레인별 터치 반응 버튼 홀더 (동그란 테두리)
+  for (let i = 0; i < 4; i++) {
+    const hx = i * laneWidth + laneWidth / 2;
+    ctx.save();
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.roundRect(i * laneWidth + 8, judgeLineY - 22, laneWidth - 16, 44, 22);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  // 4. 리플(Ripple) 이펙트 렌더링
+  for (let i = ripples.length - 1; i >= 0; i--) {
+    const rip = ripples[i];
+    ctx.save();
+    ctx.strokeStyle = rip.color;
+    ctx.shadowColor = rip.color;
+    ctx.shadowBlur = 10;
+    ctx.lineWidth = 3;
+    ctx.globalAlpha = rip.alpha;
+    ctx.beginPath();
+    ctx.arc(rip.x, rip.y, rip.radius, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.restore();
+
+    rip.radius += 2.5;
+    rip.alpha -= 0.05;
+    if (rip.alpha <= 0 || rip.radius >= rip.maxRadius) {
+      ripples.splice(i, 1);
+    }
+  }
+
+  // 5. 2D 캡슐형 노트 렌더링
+  activeNotes.forEach(note => {
+    if (note.hit) return;
+
+    const timeDiff = note.time - currentTime;
+    const noteY = judgeLineY - (timeDiff * NOTE_SPEED);
+    const noteHeight = 22;
+
+    if (timeDiff < -0.18 && !note.missed) {
+      note.missed = true;
+      combo = 0;
+      missCount++;
+      addEffect(note.lane, 'MISS');
+      updateHUD();
+    }
+
+    if (noteY > -30 && noteY < height + 30 && !note.missed) {
+      const x = note.lane * laneWidth + 8;
+      const w = laneWidth - 16;
+      
+      // 레인별 캡슐 색상 분기 (사이버틱한 블루/핑크 네온 조합)
+      const isPink = (note.lane === 1 || note.lane === 2);
+      const mainColor = isPink ? '#FF69C7' : '#00fff2';
+      const glowColor = isPink ? '#ffc0eb' : '#a0f9ff';
+
+      ctx.save();
+      ctx.shadowColor = mainColor;
+      ctx.shadowBlur = 18;
+
+      // 캡슐 몸체 그라데이션
+      const grad = ctx.createLinearGradient(x, noteY - noteHeight/2, x, noteY + noteHeight/2);
+      grad.addColorStop(0, glowColor);
+      grad.addColorStop(0.5, mainColor);
+      grad.addColorStop(1, '#111111');
+
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.roundRect(x, noteY - noteHeight / 2, w, noteHeight, 11);
+      ctx.fill();
+
+      // 내부 광채 디테일 라인
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.roundRect(x + 2, noteY - noteHeight / 2 + 2, w - 4, noteHeight / 2 - 2, 6);
+      ctx.stroke();
+
+      ctx.restore();
+    }
+  });
+
+  // 6. 판정 텍스트 이펙트 렌더링
+  for (let i = effects.length - 1; i >= 0; i--) {
+    const eff = effects[i];
+    ctx.save();
+    ctx.font = 'bold 13px "Press Start 2P"';
+    ctx.textAlign = 'center';
+    
+    if (eff.text === 'MISS') {
+      ctx.fillStyle = `rgba(255, 68, 68, ${eff.alpha})`;
+      ctx.shadowColor = '#ff4444';
+    } else if (eff.text === 'PERFECT') {
+      ctx.fillStyle = `rgba(255, 215, 0, ${eff.alpha})`;
+      ctx.shadowColor = '#ffd700';
+    } else {
+      ctx.fillStyle = `rgba(0, 255, 242, ${eff.alpha})`;
+      ctx.shadowColor = '#00fff2';
+    }
+    ctx.shadowBlur = 10;
+    ctx.fillText(eff.text, eff.x, eff.y);
+    ctx.restore();
+
+    eff.y -= 1.2;
+    eff.alpha -= 0.035;
+    if (eff.alpha <= 0) effects.splice(i, 1);
+  }
+
+  requestAnimationFrame(gameLoop);
+}
+
+function triggerInput(lane) {
+  if (!isPlaying) return;
+
+  const currentTime = currentBgm.currentTime;
+  const target = activeNotes.find(n => n.lane === lane && !n.hit && !n.missed);
+
+  // 누를 때마다 빈 공간에도 가벼운 터치 리플 효과 생성
+  ripples.push({
+    x: lane * laneWidth + laneWidth / 2,
+    y: judgeLineY,
+    radius: 5,
+    maxRadius: 40,
+    alpha: 0.5,
+    color: '#ffffff'
+  });
+
+  if (target) {
+    const diff = Math.abs(target.time - currentTime);
+    
+    if (diff <= 0.15) {
+      target.hit = true;
+      combo++;
+      if (combo > maxCombo) maxCombo = combo;
+      
+      const isPerfect = diff <= 0.07;
+      if (isPerfect) {
+        perfectCount++;
+        score += 1000;
+      } else {
+        greatCount++;
+        score += 500;
+      }
+      
+      addEffect(lane, isPerfect ? 'PERFECT' : 'GREAT');
+      updateHUD();
+    }
+  }
+}
+
+function endGame() {
+  if (!isPlaying) return;
+  isPlaying = false;
+  try { currentBgm.pause(); } catch(e) {}
+
+  const totalNotes = songs[activeSongKey].pattern.length;
+  const maxPossibleScore = totalNotes * 1000;
+  const accuracy = maxPossibleScore > 0 ? (score / maxPossibleScore) * 100 : 0;
+
+  let rank = 'F';
+  let message = '"STAGE FAILED... TRY AGAIN!"';
+  if (accuracy >= 90) { rank = 'S'; message = '"AMAZING! PERFECT RHYTHM!"'; }
+  else if (accuracy >= 80) { rank = 'A'; message = '"GREAT JOB!"'; }
+  else if (accuracy >= 70) { rank = 'B'; message = '"GOOD!"'; }
+  else if (accuracy >= 60) { rank = 'C'; message = '"CLEAR!"'; }
+
+  let rankColor = '#ffffff'; 
+  let shadowColor = '#ff4444';
+
+  if (rank === 'S') { rankColor = '#ffffff'; shadowColor = '#ffd700'; } 
+  else if (rank === 'A') { rankColor = '#ffffff'; shadowColor = '#FD5DBD'; } 
+  else if (rank === 'B') { rankColor = '#ffffff'; shadowColor = '#00fff2'; } 
+  else if (rank === 'C') { rankColor = '#ffffff'; shadowColor = '#ff8800'; } 
+
+  const resultScreen = document.getElementById('result-screen');
+  resultScreen.innerHTML = `
+    <div style="font-size: 4.5rem; color: ${rankColor}; text-shadow: 0 0 15px ${shadowColor}; margin-bottom: 5px;">${rank}</div>
+    <div style="font-size: 0.65rem; color: #fcd3f2; margin-bottom: 20px;">${message}</div>
+    
+    <div style="font-size: 0.65rem; line-height: 2.2; margin-bottom: 25px; text-align: left;">
+      <p style="color:#00fff2;">PERFECT : ${perfectCount}</p>
+      <p style="color:#fcd3f2;">GREAT   : ${greatCount}</p>
+      <p style="color:#ff4444;">MISS    : ${missCount}</p>
+      <hr style="border: 0; border-top: 1px solid #555; margin: 5px 0;">
+      <p style="color:#ffffff;">MAX COMBO : ${maxCombo}</p>
+    </div>
+    <div>
+      <button id="retry-btn" class="start-btn">RETRY</button><br>
+      <button id="select-song-btn" class="start-btn">SELECT SONG</button>
+    </div>
+  `;
+  resultScreen.classList.remove('hidden');
+
+  document.getElementById('retry-btn').addEventListener('click', () => startGame(activeSongKey));
+  document.getElementById('retry-btn').addEventListener('touchend', (e) => { e.preventDefault(); startGame(activeSongKey); });
+
+  document.getElementById('select-song-btn').addEventListener('click', goToSongSelect);
+  document.getElementById('select-song-btn').addEventListener('touchend', (e) => { e.preventDefault(); goToSongSelect(); });
+}
+
+document.getElementById('start-game-btn').addEventListener('click', goToSongSelect);
+document.getElementById('start-game-btn').addEventListener('touchend', (e) => {
+  e.preventDefault();
+  goToSongSelect();
+});
+
+document.querySelectorAll('.song-select-btn').forEach(btn => {
+  const songKey = btn.getAttribute('data-song');
+  btn.addEventListener('click', () => startGame(songKey));
+  btn.addEventListener('touchend', (e) => {
+    e.preventDefault();
+    startGame(songKey);
+  });
+});
+
+const keyMap = {
+  d: 0, f: 1, j: 2, k: 3
+};
+
+document.addEventListener('keydown', (e) => {
+  const key = e.key.toLowerCase();
+  if (!(key in keyMap)) return;
+  e.preventDefault();
+  if (!isPlaying) return;
+  triggerInput(keyMap[key]);
+});
+
+canvas.addEventListener('touchstart', (e) => {
+  if (!isPlaying) return;
+  e.preventDefault();
+  const rect = canvas.getBoundingClientRect();
+  const touchX = e.touches[0].clientX;
+  const lane = Math.floor((touchX - rect.left) / laneWidth);
+  if (lane >= 0 && lane < 4) triggerInput(lane);
+}, { passive: false });
+
+canvas.addEventListener('mousedown', (e) => {
+  if (!isPlaying) return;
+  const rect = canvas.getBoundingClientRect();
+  const lane = Math.floor((e.clientX - rect.left) / laneWidth);
+  if (lane >= 0 && lane < 4) triggerInput(lane);
+});
+</script>
+
+</body>
+</html>
