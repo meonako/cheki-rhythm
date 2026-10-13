@@ -3,10 +3,10 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <title>82 Rhythm</title>
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
 
 <style>
@@ -36,10 +36,10 @@ body {
   max-width: 430px;
   height: 100vh;
   height: 100dvh;
-  background: #000;
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  background: #000;
   border: 2px solid #FF69C7;
   box-shadow: 0 0 20px rgba(255,105,199,.4);
 }
@@ -62,11 +62,11 @@ body {
 
 #canvas-wrapper {
   position: relative;
-  width: 100%;
   flex: 1;
   min-height: 0;
-  background: #000;
+  width: 100%;
   overflow: hidden;
+  background: #000;
 }
 
 canvas {
@@ -82,14 +82,14 @@ canvas {
 .screen {
   position: absolute;
   inset: 0;
-  background: rgba(0,0,0,.95);
+  z-index: 999;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
   text-align: center;
   padding: 20px;
-  z-index: 999;
+  background: rgba(0,0,0,.95);
 }
 
 .hidden { display: none !important; }
@@ -109,26 +109,26 @@ h2 {
 }
 
 .start-btn, .song-select-btn {
+  border: 0;
   background: transparent;
   color: #fff;
-  border: none;
-  padding: 12px 20px;
-  font-size: .9rem;
-  cursor: pointer;
   font-family: 'Press Start 2P', cursive;
+  font-size: .9rem;
+  padding: 12px 20px;
   margin: 8px 0;
+  cursor: pointer;
   touch-action: manipulation;
-}
-
-.start-btn:active, .song-select-btn:active {
-  color: #FF69C7;
-  transform: scale(1.05);
 }
 
 .song-select-btn {
   font-size: 1rem;
   margin-bottom: 20px;
   word-break: keep-all;
+}
+
+.start-btn:active, .song-select-btn:active {
+  color: #FF69C7;
+  transform: scale(1.05);
 }
 </style>
 </head>
@@ -166,26 +166,41 @@ const ctx = canvas.getContext('2d');
 const wrapper = document.getElementById('canvas-wrapper');
 
 let width, height, laneWidth, judgeLineY;
+let lastFrameTime = 0;
+let animationId = null;
 
 function resize() {
-  width = canvas.width = wrapper.clientWidth;
-  height = canvas.height = wrapper.clientHeight;
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+  width = wrapper.clientWidth;
+  height = wrapper.clientHeight;
+
+  canvas.width = Math.round(width * dpr);
+  canvas.height = Math.round(height * dpr);
+  canvas.style.width = width + 'px';
+  canvas.style.height = height + 'px';
+
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
   laneWidth = width / 4;
   judgeLineY = height - 105;
 }
+
 window.addEventListener('resize', resize);
 resize();
 
-// 배경 이미지
+// 배경
 const bgImage = new Image();
 let isBgLoaded = false;
 
 bgImage.onload = () => { isBgLoaded = true; };
+bgImage.onerror = () => { isBgLoaded = false; };
 bgImage.src = './cover.png';
 
 function generatePattern(duration, bpm, offset, seed) {
   const pattern = [];
   const beat = 60 / bpm;
+
   let state = seed >>> 0;
   let previousLane = -1;
   let previousDouble = -1;
@@ -196,25 +211,32 @@ function generatePattern(duration, bpm, offset, seed) {
   }
 
   function pickLane(exclude = []) {
-    const choices = [0,1,2,3].filter(l => !exclude.includes(l));
+    const choices = [0,1,2,3].filter(
+      lane => !exclude.includes(lane)
+    );
     return choices[Math.floor(rand() * choices.length)];
   }
 
   let beatIndex = 0;
 
-  for (let time = offset; time < duration - 0.2; time += beat, beatIndex++) {
-    const variation = rand();
-
-    if (variation < 0.10 && beatIndex % 4 !== 0) continue;
+  for (
+    let time = offset;
+    time < duration - 0.2;
+    time += beat, beatIndex++
+  ) {
+    if (rand() < 0.10 && beatIndex % 4 !== 0) continue;
 
     const lane = pickLane([previousLane]);
+
     pattern.push({t: time, l: lane});
     previousLane = lane;
 
     if (rand() < 0.30) {
       const offbeat = time + beat / 2;
+
       if (offbeat < duration - 0.2) {
         const nextLane = pickLane([previousLane]);
+
         pattern.push({t: offbeat, l: nextLane});
         previousLane = nextLane;
       }
@@ -222,6 +244,7 @@ function generatePattern(duration, bpm, offset, seed) {
 
     if (rand() < 0.13 && beatIndex !== previousDouble) {
       const secondLane = pickLane([lane]);
+
       pattern.push({t: time, l: secondLane});
       previousDouble = beatIndex;
     }
@@ -229,7 +252,10 @@ function generatePattern(duration, bpm, offset, seed) {
 
   return pattern
     .sort((a,b) => a.t - b.t || a.l - b.l)
-    .map(n => ({time: Number(n.t.toFixed(3)), lane: n.l}));
+    .map(n => ({
+      time: Number(n.t.toFixed(3)),
+      lane: n.l
+    }));
 }
 
 const songs = {
@@ -256,34 +282,65 @@ let maxCombo = 0;
 let perfectCount = 0;
 let greatCount = 0;
 let missCount = 0;
+
 let activeNotes = [];
 let effects = [];
-let animationId = null;
+let particles = [];
 
-// ------------------------------
-// 판정 이펙트 시스템
-// ------------------------------
+// ========================================
+// 화려한 판정 이펙트
+// 타일 자체는 평소와 동일한 사각형으로 유지
+// ========================================
+
+const TAU = Math.PI * 2;
 
 function addEffect(lane, type) {
   const x = lane * laneWidth + laneWidth / 2;
+
+  const perfect = type === 'PERFECT';
 
   effects.push({
     x,
     y: judgeLineY,
     type,
     age: 0,
-    duration: type === 'PERFECT' ? 650 : 500,
-    seed: Math.random() * 1000
+    duration: perfect ? 780 : 620,
+    seed: Math.random() * TAU
   });
+
+  // 별가루가 중심에서 사방으로 튀어나옴
+  const count = perfect ? 32 : 21;
+
+  for (let i = 0; i < count; i++) {
+    const angle = Math.random() * TAU;
+    const speed = 90 + Math.random() * (perfect ? 290 : 210);
+
+    particles.push({
+      x: x + (Math.random() - 0.5) * 12,
+      y: judgeLineY + (Math.random() - 0.5) * 12,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed,
+      size: 1.5 + Math.random() * (perfect ? 4 : 3),
+      rotation: Math.random() * TAU,
+      spin: (Math.random() - 0.5) * 9,
+      life: 0,
+      duration: 350 + Math.random() * 430,
+      shape: Math.random() < 0.72 ? 'star' : 'diamond',
+      color: Math.random() < 0.45
+        ? '#FFFFFF'
+        : Math.random() < 0.5
+          ? '#FF83E4'
+          : '#65F8FF'
+    });
+  }
 }
 
-// 별 모양 그리기
-function drawStar(x, y, outerRadius, innerRadius, points, rotation) {
+function drawStar(x, y, outer, inner, rotation = 0) {
   ctx.beginPath();
 
-  for (let i = 0; i < points * 2; i++) {
-    const angle = rotation + i * Math.PI / points;
-    const radius = i % 2 === 0 ? outerRadius : innerRadius;
+  for (let i = 0; i < 8; i++) {
+    const angle = rotation - Math.PI / 2 + i * Math.PI / 4;
+    const radius = i % 2 === 0 ? outer : inner;
     const px = x + Math.cos(angle) * radius;
     const py = y + Math.sin(angle) * radius;
 
@@ -294,137 +351,203 @@ function drawStar(x, y, outerRadius, innerRadius, points, rotation) {
   ctx.closePath();
 }
 
-function drawHitEffects(deltaTime) {
+function drawDiamond(x, y, size, rotation = 0) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(rotation);
+
+  ctx.beginPath();
+  ctx.moveTo(0, -size * 1.7);
+  ctx.lineTo(size * 0.7, 0);
+  ctx.lineTo(0, size * 1.7);
+  ctx.lineTo(-size * 0.7, 0);
+  ctx.closePath();
+
+  ctx.restore();
+}
+
+function drawEffects(dt) {
+  // 링과 플래시
   for (let i = effects.length - 1; i >= 0; i--) {
     const e = effects[i];
-    e.age += deltaTime;
 
-    const progress = Math.min(e.age / e.duration, 1);
-    const fade = 1 - progress;
+    e.age += dt;
+
+    const p = Math.min(e.age / e.duration, 1);
+    const fade = Math.pow(1 - p, 0.8);
     const perfect = e.type === 'PERFECT';
 
-    const pink = '#FF72DC';
-    const cyan = '#54F7FF';
-
-    const primary = perfect ? pink : cyan;
-    const secondary = perfect ? cyan : pink;
+    const pink = '#FF69D4';
+    const cyan = '#57F5FF';
 
     ctx.save();
+
+    // 링은 화면보다 커지지 않도록 자연스럽게 확대
     ctx.globalAlpha = fade;
 
-    // 1. 중심의 빛 번짐
-    const glowRadius = 12 + progress * 48;
-    const glow = ctx.createRadialGradient(
-      e.x, e.y, 0,
-      e.x, e.y, glowRadius
-    );
+    // 1. 중앙의 강렬한 빛
+    if (p < 0.35) {
+      const flashP = p / 0.35;
+      const radius = 16 + flashP * 54;
 
-    glow.addColorStop(0, 'rgba(255,255,255,0.95)');
-    glow.addColorStop(0.22, perfect
-      ? 'rgba(255,105,199,0.7)'
-      : 'rgba(84,247,255,0.7)');
-    glow.addColorStop(1, 'rgba(255,105,199,0)');
+      const flash = ctx.createRadialGradient(
+        e.x, e.y, 0,
+        e.x, e.y, radius
+      );
 
-    ctx.fillStyle = glow;
-    ctx.beginPath();
-    ctx.arc(e.x, e.y, glowRadius, 0, Math.PI * 2);
-    ctx.fill();
+      flash.addColorStop(0, 'rgba(255,255,255,0.98)');
+      flash.addColorStop(0.12, 'rgba(255,255,255,0.8)');
+      flash.addColorStop(0.38, perfect
+        ? 'rgba(255,105,212,0.55)'
+        : 'rgba(87,245,255,0.55)');
+      flash.addColorStop(1, 'rgba(255,105,212,0)');
 
-    // 2. 바깥쪽으로 커지는 네온 링
-    for (let ring = 0; ring < 2; ring++) {
-      const ringProgress = Math.min(1, progress + ring * 0.18);
-      const radius = 12 + ringProgress * (perfect ? 65 : 45);
+      ctx.fillStyle = flash;
+      ctx.beginPath();
+      ctx.arc(e.x, e.y, radius, 0, TAU);
+      ctx.fill();
+    }
+
+    // 2. 겹쳐지는 네온 링
+    // 사진처럼 중심을 감싸는 타원형 링
+    for (let r = 0; r < 4; r++) {
+      const rp = Math.min(1, p + r * 0.11);
+      const radius = 13 + rp * (perfect ? 78 : 60);
+      const ry = radius * 0.58;
 
       ctx.beginPath();
       ctx.ellipse(
         e.x, e.y,
-        radius,
-        radius * 0.60,
-        0, 0, Math.PI * 2
+        radius, ry,
+        0, 0, TAU
       );
 
-      ctx.strokeStyle = ring === 0 ? primary : secondary;
-      ctx.lineWidth = ring === 0 ? 4 * fade + 0.5 : 2 * fade + 0.5;
-      ctx.shadowColor = ctx.strokeStyle;
-      ctx.shadowBlur = 18;
+      const color = r % 2 === 0 ? pink : cyan;
+
+      ctx.strokeStyle = color;
+      ctx.lineWidth = (r === 0 ? 5 : 2.4) * (1 - rp) + 0.3;
+      ctx.shadowColor = color;
+      ctx.shadowBlur = r === 0 ? 25 : 13;
       ctx.stroke();
     }
 
     ctx.shadowBlur = 0;
 
-    // 3. 중심에서 퍼지는 빛줄기
-    const rayCount = perfect ? 12 : 8;
-
-    for (let r = 0; r < rayCount; r++) {
-      const angle = (Math.PI * 2 * r / rayCount) + e.seed;
-      const inner = 12 + progress * 14;
-      const outer = inner + (1 - progress) * (perfect ? 48 : 30);
+    // 3. 이중 파동: 얇은 원형 파장이 바깥으로 퍼짐
+    for (let r = 0; r < 3; r++) {
+      const rp = Math.min(1, p * 1.2 + r * 0.2);
+      const radius = 18 + rp * 88;
 
       ctx.beginPath();
-      ctx.moveTo(
-        e.x + Math.cos(angle) * inner,
-        e.y + Math.sin(angle) * inner
-      );
-      ctx.lineTo(
-        e.x + Math.cos(angle) * outer,
-        e.y + Math.sin(angle) * outer
+      ctx.ellipse(
+        e.x, e.y,
+        radius, radius * 0.63,
+        0, 0, TAU
       );
 
-      ctx.strokeStyle = r % 2 === 0 ? '#FFFFFF' : primary;
-      ctx.lineWidth = r % 3 === 0 ? 3 * fade + 0.2 : 1.5 * fade;
-      ctx.shadowColor = primary;
-      ctx.shadowBlur = 10;
+      ctx.strokeStyle = r % 2 === 0
+        ? 'rgba(255,255,255,0.9)'
+        : 'rgba(255,140,235,0.85)';
+
+      ctx.lineWidth = (1 - rp) * 2 + 0.2;
       ctx.stroke();
     }
 
-    // 4. 사방으로 흩어지는 별빛
+    // 4. 중심에서 바깥으로 뻗는 광선
+    const rayCount = perfect ? 28 : 20;
+
+    for (let r = 0; r < rayCount; r++) {
+      const angle = TAU * r / rayCount + e.seed;
+      const inner = 9 + p * 23;
+      const outer = inner + (1 - p) * (
+        r % 3 === 0 ? 105 : 65
+      );
+
+      const x1 = e.x + Math.cos(angle) * inner;
+      const y1 = e.y + Math.sin(angle) * inner * 0.7;
+      const x2 = e.x + Math.cos(angle) * outer;
+      const y2 = e.y + Math.sin(angle) * outer * 0.7;
+
+      ctx.beginPath();
+      ctx.moveTo(x1, y1);
+      ctx.lineTo(x2, y2);
+
+      ctx.strokeStyle = r % 3 === 0
+        ? '#FFFFFF'
+        : r % 2 === 0 ? pink : cyan;
+
+      ctx.lineWidth = r % 4 === 0 ? 2.7 : 1.2;
+      ctx.shadowColor = ctx.strokeStyle;
+      ctx.shadowBlur = 12;
+      ctx.stroke();
+    }
+
+    ctx.shadowBlur = 0;
+
+    // 5. 네 방향으로 강하게 번쩍이는 십자 플래시
+    if (p < 0.42) {
+      const fp = p / 0.42;
+      const length = 12 + fp * 66;
+
+      ctx.globalAlpha = (1 - fp) * 0.9;
+
+      const gradH = ctx.createLinearGradient(
+        e.x - length, e.y,
+        e.x + length, e.y
+      );
+
+      gradH.addColorStop(0, 'rgba(255,255,255,0)');
+      gradH.addColorStop(0.5, '#FFFFFF');
+      gradH.addColorStop(1, 'rgba(255,255,255,0)');
+
+      ctx.fillStyle = gradH;
+      ctx.fillRect(e.x - length, e.y - 2, length * 2, 4);
+
+      const gradV = ctx.createLinearGradient(
+        e.x, e.y - length,
+        e.x, e.y + length
+      );
+
+      gradV.addColorStop(0, 'rgba(255,255,255,0)');
+      gradV.addColorStop(0.5, '#FFFFFF');
+      gradV.addColorStop(1, 'rgba(255,255,255,0)');
+
+      ctx.fillStyle = gradV;
+      ctx.fillRect(e.x - 2, e.y - length, 4, length * 2);
+    }
+
+    // 6. 링을 따라 반짝이는 별들
     const starCount = perfect ? 12 : 8;
 
     for (let s = 0; s < starCount; s++) {
-      const angle = (Math.PI * 2 * s / starCount) + e.seed;
-      const distance = 10 + progress * (perfect ? 65 : 45);
+      const angle = TAU * s / starCount + e.seed;
+      const distance = 18 + p * (perfect ? 82 : 62);
 
       const sx = e.x + Math.cos(angle) * distance;
-      const sy = e.y + Math.sin(angle) * distance * 0.68;
-      const size = (perfect ? 7 : 5) * fade + 0.4;
+      const sy = e.y + Math.sin(angle) * distance * 0.6;
+      const starSize = (perfect ? 7 : 5) * fade + 0.2;
 
-      drawStar(sx, sy, size, size * 0.35, 4, angle);
-      ctx.fillStyle = s % 2 === 0 ? '#FFFFFF' : secondary;
-      ctx.shadowColor = primary;
-      ctx.shadowBlur = 12;
+      drawStar(sx, sy, starSize, starSize * 0.28, angle);
+
+      ctx.fillStyle = s % 3 === 0 ? '#FFFFFF' : pink;
+      ctx.shadowColor = cyan;
+      ctx.shadowBlur = 16;
       ctx.fill();
     }
 
-    // 5. 중앙의 밝은 플래시
-    if (progress < 0.25) {
-      const flashAlpha = 1 - progress / 0.25;
-      ctx.globalAlpha = flashAlpha * 0.8;
-
-      const flash = ctx.createRadialGradient(
-        e.x, e.y, 0, e.x, e.y, 35
-      );
-      flash.addColorStop(0, '#FFFFFF');
-      flash.addColorStop(0.3, primary);
-      flash.addColorStop(1, 'rgba(255,255,255,0)');
-
-      ctx.fillStyle = flash;
-      ctx.beginPath();
-      ctx.arc(e.x, e.y, 35, 0, Math.PI * 2);
-      ctx.fill();
-    }
-
-    // 6. PERFECT / GREAT 판정 텍스트
-    ctx.globalAlpha = fade;
+    // 7. 판정 글씨
+    ctx.globalAlpha = Math.max(0, 1 - p * 1.35);
     ctx.font = '10px "Press Start 2P"';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillStyle = '#FFFFFF';
-    ctx.shadowColor = primary;
-    ctx.shadowBlur = 12;
+    ctx.shadowColor = perfect ? pink : cyan;
+    ctx.shadowBlur = 15;
+
     ctx.fillText(
       e.type,
       e.x,
-      e.y - 35 - progress * 22
+      e.y - 38 - p * 27
     );
 
     ctx.restore();
@@ -433,11 +556,61 @@ function drawHitEffects(deltaTime) {
       effects.splice(i, 1);
     }
   }
+
+  // 8. 별가루와 다이아몬드 파티클
+  for (let i = particles.length - 1; i >= 0; i--) {
+    const pt = particles[i];
+
+    pt.life += dt;
+
+    const p = Math.min(pt.life / pt.duration, 1);
+    const fade = 1 - p;
+    const seconds = dt / 1000;
+
+    pt.x += pt.vx * seconds;
+    pt.y += pt.vy * seconds;
+
+    pt.vx *= Math.pow(0.08, seconds);
+    pt.vy *= Math.pow(0.08, seconds);
+    pt.vy += 18 * seconds;
+    pt.rotation += pt.spin * seconds;
+
+    ctx.save();
+    ctx.globalAlpha = fade;
+    ctx.fillStyle = pt.color;
+    ctx.shadowColor = pt.color;
+    ctx.shadowBlur = 15;
+
+    if (pt.shape === 'star') {
+      drawStar(
+        pt.x, pt.y,
+        pt.size * fade + 0.2,
+        pt.size * 0.24 * fade + 0.1,
+        pt.rotation
+      );
+    } else {
+      ctx.translate(pt.x, pt.y);
+      ctx.rotate(pt.rotation);
+      ctx.beginPath();
+      ctx.moveTo(0, -pt.size);
+      ctx.lineTo(pt.size * 0.55, 0);
+      ctx.lineTo(0, pt.size);
+      ctx.lineTo(-pt.size * 0.55, 0);
+      ctx.closePath();
+    }
+
+    ctx.fill();
+    ctx.restore();
+
+    if (pt.life >= pt.duration) {
+      particles.splice(i, 1);
+    }
+  }
 }
 
-// ------------------------------
-// 화면 전환
-// ------------------------------
+// ========================================
+// 화면과 게임 시스템
+// ========================================
 
 function goToSongSelect() {
   document.getElementById('start-screen').classList.add('hidden');
@@ -446,18 +619,20 @@ function goToSongSelect() {
 }
 
 function startGame(songKey) {
-  activeSongKey = songKey;
   const song = songs[songKey];
   if (!song) return;
+
+  isPlaying = false;
 
   if (animationId !== null) {
     cancelAnimationFrame(animationId);
     animationId = null;
   }
 
-  isPlaying = false;
   currentBgm.pause();
+  currentBgm.onended = null;
 
+  activeSongKey = songKey;
   score = 0;
   combo = 0;
   maxCombo = 0;
@@ -465,10 +640,9 @@ function startGame(songKey) {
   greatCount = 0;
   missCount = 0;
   effects = [];
+  particles = [];
 
   isBgLoaded = false;
-  bgImage.onload = () => { isBgLoaded = true; };
-  bgImage.onerror = () => { isBgLoaded = false; };
   bgImage.src = song.bg;
 
   activeNotes = song.pattern.map(n => ({
@@ -481,21 +655,19 @@ function startGame(songKey) {
   document.getElementById('song-select-screen').classList.add('hidden');
   document.getElementById('result-screen').classList.add('hidden');
 
-  document.getElementById('score').innerText = '000000';
-  document.getElementById('combo').innerText = '0';
+  updateHUD();
 
   currentBgm = new Audio(song.src);
   currentBgm.preload = 'auto';
-
   currentBgm.onended = endGame;
 
   isPlaying = true;
+  lastFrameTime = performance.now();
 
-  currentBgm.play().catch(error => {
-    console.log('Audio playback error:', error);
+  currentBgm.play().catch(err => {
+    console.log('Audio playback error:', err);
   });
 
-  lastFrameTime = performance.now();
   animationId = requestAnimationFrame(gameLoop);
 }
 
@@ -509,7 +681,7 @@ function updateHUD() {
 function gameLoop(timestamp) {
   if (!isPlaying) return;
 
-  const deltaTime = Math.min(timestamp - lastFrameTime, 40);
+  const dt = Math.min(timestamp - lastFrameTime, 40);
   lastFrameTime = timestamp;
 
   const currentTime = currentBgm.currentTime;
@@ -519,6 +691,7 @@ function gameLoop(timestamp) {
   // 배경
   if (isBgLoaded && bgImage.complete && bgImage.naturalWidth > 0) {
     ctx.drawImage(bgImage, 0, 0, width, height);
+
     ctx.fillStyle = 'rgba(0,0,0,0.5)';
     ctx.fillRect(0, 0, width, height);
   } else {
@@ -526,7 +699,7 @@ function gameLoop(timestamp) {
     ctx.fillRect(0, 0, width, height);
   }
 
-  // 4개 레인
+  // 레인
   ctx.strokeStyle = 'rgba(255,105,199,0.25)';
   ctx.lineWidth = 2;
 
@@ -540,108 +713,87 @@ function gameLoop(timestamp) {
   // 판정선
   ctx.strokeStyle = '#FF69C7';
   ctx.lineWidth = 4;
-  ctx.shadowColor = '#FF69C7';
-  ctx.shadowBlur = 12;
+
   ctx.beginPath();
   ctx.moveTo(0, judgeLineY);
   ctx.lineTo(width, judgeLineY);
   ctx.stroke();
-  ctx.shadowBlur = 0;
 
-  // 노트
-  activeNotes.forEach(note => {
-    if (note.hit || note.missed) return;
+  // 기본 타일은 단순하게 유지
+  for (const note of activeNotes) {
+    if (note.hit || note.missed) continue;
 
     const timeDiff = note.time - currentTime;
     const noteY = judgeLineY - timeDiff * NOTE_SPEED;
-    const noteHeight = 18;
 
     if (timeDiff < -0.18) {
       note.missed = true;
       combo = 0;
       missCount++;
-
-      // MISS도 작은 빨간 빛으로 표시
-      effects.push({
-        x: note.lane * laneWidth + laneWidth / 2,
-        y: judgeLineY,
-        type: 'MISS',
-        age: 0,
-        duration: 450,
-        seed: 0
-      });
-
       updateHUD();
-      return;
+      continue;
     }
 
-    if (noteY > -20 && noteY < height + 20) {
-      const x = note.lane * laneWidth + 6;
-      const w = laneWidth - 12;
-      const color =
-        note.lane === 0 || note.lane === 3
-          ? '#FDC7FB'
-          : '#54F7FF';
+    if (noteY < -20 || noteY > height + 20) continue;
 
-      ctx.save();
-      ctx.shadowColor = color;
-      ctx.shadowBlur = 15;
-      ctx.fillStyle = color;
-      ctx.fillRect(x, noteY - noteHeight / 2, w, noteHeight);
-      ctx.restore();
-    }
-  });
+    const x = note.lane * laneWidth + 6;
+    const w = laneWidth - 12;
+    const color = note.lane === 0 || note.lane === 3
+      ? '#FDC7FB'
+      : '#FD5DBD';
 
-  // 판정 이펙트는 노트 위에 그린다.
-  drawHitEffects(deltaTime);
+    ctx.fillStyle = color;
+    ctx.fillRect(x, noteY - 9, w, 18);
+  }
+
+  // 모든 타일 위에 판정 이펙트 렌더링
+  drawEffects(dt);
 
   animationId = requestAnimationFrame(gameLoop);
 }
 
-let lastFrameTime = 0;
-
-// ------------------------------
-// 노트 판정
-// ------------------------------
+// ========================================
+// 입력 판정
+// ========================================
 
 function triggerInput(lane) {
   if (!isPlaying) return;
 
   const currentTime = currentBgm.currentTime;
 
-  const target = activeNotes.find(n =>
-    n.lane === lane && !n.hit && !n.missed
-  );
+  // 같은 레인에서 가장 가까운 미판정 노트 검색
+  let target = null;
+  let smallestDiff = Infinity;
 
-  if (!target) return;
+  for (const note of activeNotes) {
+    if (note.lane !== lane || note.hit || note.missed) continue;
 
-  const diff = Math.abs(target.time - currentTime);
+    const diff = Math.abs(note.time - currentTime);
 
-  if (diff <= 0.15) {
-    target.hit = true;
-    combo++;
-
-    if (combo > maxCombo) maxCombo = combo;
-
-    const isPerfect = diff <= 0.07;
-
-    if (isPerfect) {
-      perfectCount++;
-      score += 1000;
-      addEffect(lane, 'PERFECT');
-    } else {
-      greatCount++;
-      score += 500;
-      addEffect(lane, 'GREAT');
+    if (diff < smallestDiff) {
+      smallestDiff = diff;
+      target = note;
     }
-
-    updateHUD();
   }
-}
 
-// ------------------------------
-// 결과 화면
-// ------------------------------
+  if (!target || smallestDiff > 0.15) return;
+
+  target.hit = true;
+  combo++;
+  maxCombo = Math.max(combo, maxCombo);
+
+  if (smallestDiff <= 0.07) {
+    perfectCount++;
+    score += 1000;
+    addEffect(lane, 'PERFECT');
+  } else {
+    greatCount++;
+    score += 500;
+    addEffect(lane, 'GREAT');
+  }
+
+  updateHUD();
+}
 
 function endGame() {
   if (!isPlaying) return;
@@ -650,38 +802,38 @@ function endGame() {
   currentBgm.pause();
 
   const totalNotes = songs[activeSongKey].pattern.length;
-  const accuracy = totalNotes > 0
-    ? (score / (totalNotes * 1000)) * 100
+  const accuracy = totalNotes
+    ? score / (totalNotes * 1000) * 100
     : 0;
 
   let rank = 'F';
   let message = '"STAGE FAILED... TRY AGAIN!"';
-  let shadowColor = '#ff4444';
+  let color = '#ff4444';
 
   if (accuracy >= 90) {
     rank = 'S';
     message = '"AMAZING! PERFECT RHYTHM!"';
-    shadowColor = '#ffd700';
+    color = '#ffd700';
   } else if (accuracy >= 80) {
     rank = 'A';
     message = '"GREAT JOB!"';
-    shadowColor = '#FD5DBD';
+    color = '#FD5DBD';
   } else if (accuracy >= 70) {
     rank = 'B';
     message = '"GOOD!"';
-    shadowColor = '#00fff2';
+    color = '#00fff2';
   } else if (accuracy >= 60) {
     rank = 'C';
     message = '"CLEAR!"';
-    shadowColor = '#ff8800';
+    color = '#ff8800';
   }
 
-  const resultScreen = document.getElementById('result-screen');
+  const result = document.getElementById('result-screen');
 
-  resultScreen.innerHTML = `
-    <div style="font-size:4.5rem;color:white;text-shadow:0 0 15px ${shadowColor};margin-bottom:5px">${rank}</div>
+  result.innerHTML = `
+    <div style="font-size:4.5rem;color:white;text-shadow:0 0 20px ${color};margin-bottom:10px">${rank}</div>
     <div style="font-size:.65rem;color:#fcd3f2;margin-bottom:20px">${message}</div>
-    <div style="font-size:.65rem;line-height:2.2;margin-bottom:25px;text-align:left">
+    <div style="font-size:.65rem;line-height:2.2;text-align:left;margin-bottom:20px">
       <p style="color:#54F7FF">PERFECT : ${perfectCount}</p>
       <p style="color:#fcd3f2">GREAT : ${greatCount}</p>
       <p style="color:#ff4444">MISS : ${missCount}</p>
@@ -693,7 +845,7 @@ function endGame() {
     <button id="select-song-btn" class="start-btn">SELECT SONG</button>
   `;
 
-  resultScreen.classList.remove('hidden');
+  result.classList.remove('hidden');
 
   document.getElementById('retry-btn').onclick =
     () => startGame(activeSongKey);
@@ -702,9 +854,9 @@ function endGame() {
     goToSongSelect;
 }
 
-// ------------------------------
-// 버튼 이벤트
-// ------------------------------
+// ========================================
+// 버튼 및 키보드 / 터치
+// ========================================
 
 document.getElementById('start-game-btn').addEventListener(
   'click',
@@ -712,14 +864,8 @@ document.getElementById('start-game-btn').addEventListener(
 );
 
 document.querySelectorAll('.song-select-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    startGame(btn.dataset.song);
-  });
+  btn.addEventListener('click', () => startGame(btn.dataset.song));
 });
-
-// ------------------------------
-// 키보드: D F J K
-// ------------------------------
 
 const keyMap = {
   d: 0,
@@ -735,16 +881,12 @@ window.addEventListener('keydown', e => {
 
   e.preventDefault();
 
-  if (!isPlaying || e.repeat) return;
+  if (e.repeat) return;
 
   triggerInput(keyMap[key]);
 }, true);
 
-// ------------------------------
-// 터치 및 마우스 입력
-// ------------------------------
-
-function handlePointerInput(clientX) {
+function handlePointer(clientX) {
   if (!isPlaying) return;
 
   const rect = canvas.getBoundingClientRect();
@@ -759,7 +901,7 @@ function handlePointerInput(clientX) {
 
 canvas.addEventListener('pointerdown', e => {
   e.preventDefault();
-  handlePointerInput(e.clientX);
+  handlePointer(e.clientX);
 });
 
 </script>
