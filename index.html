@@ -490,8 +490,8 @@ function drawEffects(delta) {
     ctx.save();
     ctx.translate(e.x, e.y);
     ctx.scale(
-      Math.min((laneWidth - 8) / 100, 0.42) * heartScale,
-      Math.min((laneWidth - 8) / 100, 0.42) * heartScale
+      Math.min((laneWidth - 8) / 50, 0.84) * heartScale,
+      Math.min((laneWidth - 8) / 50, 0.84) * heartScale
     );
 
     ctx.globalAlpha = heartAlpha;
@@ -515,21 +515,7 @@ function drawEffects(delta) {
 
     ctx.restore();
 
-    /* 반짝이는 별 파티클 */
-    for (const star of e.stars) {
-      const dist = star.distance * (0.35 + p * 1.1);
-      const sx = e.x + Math.cos(star.angle) * dist;
-      const sy = e.y + Math.sin(star.angle) * dist * 0.6;
-      const size = star.size * (1 - p * 0.65);
 
-      ctx.globalAlpha = alpha;
-      ctx.fillStyle = '#fff';
-      ctx.shadowColor = '#ff75eb';
-      ctx.shadowBlur = 18;
-
-      drawStar(sx, sy, size, size * 0.42, star.rotation + p);
-      ctx.fill();
-    }
 
     ctx.restore();
 
@@ -602,7 +588,35 @@ function gameLoop(timestamp) {
 
   /* 노트 */
   for (const note of activeNotes) {
-    if (note.hit || note.missed) continue;
+   if (note.missed) continue;
+
+const timeDiff = note.time - currentTime;
+const noteY = judgeLineY - timeDiff * NOTE_SPEED;
+const x = note.lane * laneWidth + laneWidth / 2;
+
+/* 판정된 하트도 계속 아래로 이동 */
+if (note.hit) {
+  if (noteY > height + 100) continue;
+
+  ctx.save();
+  ctx.translate(x, noteY);
+
+  const s = Math.min((laneWidth - 8) / 50, 0.84);
+  ctx.scale(s, s);
+
+  ctx.strokeStyle = '#ff1493';
+  ctx.lineWidth = 7;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  ctx.shadowColor = '#ff008c';
+  ctx.shadowBlur = 35;
+
+  drawHeart();
+  ctx.stroke();
+  ctx.restore();
+
+  continue;
+}
 
     const timeDiff = note.time - currentTime;
     const noteY = judgeLineY - timeDiff * NOTE_SPEED;
