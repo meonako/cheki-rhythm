@@ -99,7 +99,7 @@ h1 {
   -webkit-text-stroke: 0.5px #000;
 }
 
-/* 일본어 제목: 도트 폰트 */
+/* 일본어 게임 제목 */
 .jp-title {
   font-family: 'DotGothic16', sans-serif;
   font-size: 40px;
@@ -107,8 +107,11 @@ h1 {
   line-height: 1.5;
   letter-spacing: 0;
   white-space: nowrap;
-  -webkit-text-stroke: 3px #fcd3f2;
-  text-shadow: 5px
+  -webkit-text-stroke: 0;
+  text-shadow:
+    2px 2px 0 #e664b7,
+    4px 4px 0 #8d347d,
+    0 0 12px #ff69c7;
 }
 
 /* 영어 제목 */
@@ -119,10 +122,24 @@ h1 {
   letter-spacing: -1px;
 }
 
+/* 기본 h2: 2026 WORK BY YUN 등에 적용 */
 h2 {
   font-family: 'Press Start 2P', cursive;
-  font-size: 30px;
+  font-size: 10px;
   line-height: 1.8;
+  margin-bottom: 25px;
+}
+
+/* 곡 선택 문구만 크게 */
+.track-title {
+  font-family: 'Press Start 2P', cursive;
+  font-size: 20px;
+  line-height: 2;
+  color: #fcd3f2;
+  white-space: nowrap;
+  text-shadow:
+    2px 2px 0 #e664b7,
+    0 0 12px #ff69c7;
   margin-bottom: 25px;
 }
 
@@ -172,6 +189,10 @@ h2 {
     font-size: 8px;
   }
 
+  .track-title {
+    font-size: 13px;
+  }
+
   .song-jp {
     font-size: 19px;
     padding: 10px 4px;
@@ -198,8 +219,7 @@ h2 {
     </div>
 
     <div id="song-select-screen" class="screen hidden">
-
-      <h2>CHOOSE YOUR TRACK</h2>
+      <h2 class="track-title">CHOOSE YOUR TRACK</h2>
       <button class="song-select-btn song-jp" data-song="Trembling">チェキ☆ラブ (JP)</button>
       <button class="song-select-btn song-jp" data-song="trembling">チェキ☆ラブ (KR)</button>
     </div>
