@@ -1,304 +1,129 @@
+
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>iPad Rhythm - Catherine Landscape</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Shrikhand&family=Caveat:wght@700&family=Noto+Sans+KR:wght@700;900&display=swap" rel="stylesheet">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>チェキ☆リズム</title>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
 
-  <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      user-select: none;
-      -webkit-user-select: none;
-    }
+<style>
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  user-select: none;
+  -webkit-user-select: none;
+}
 
-    body {
-      background-color: #050505;
-      color: #ffffff;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-      min-height: 100dvh;
-      overflow: hidden;
-      font-family: 'Noto Sans KR', sans-serif;
-    }
+body {
+  background: #000;
+  color: #fff;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  min-height: 100dvh;
+  overflow: hidden;
+  font-family: 'Press Start 2P', cursive;
+}
 
-    /* 아이패드 가로 비율 (4:3 ~ 16:9 대응 반응형 컨테이너) */
-    #game-container {
-      position: relative;
-      width: 100vw;
-      height: 100vh;
-      max-width: 1180px;
-      max-height: 820px;
-      aspect-ratio: 4 / 3;
-      background-color: #000000;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-      border: 4px solid #ff007f;
-      box-shadow: 0 0 35px rgba(255, 0, 127, 0.7), inset 0 0 20px rgba(255, 0, 127, 0.3);
-    }
+#game-container {
+  position: relative;
+  width: 100%;
+  max-width: 430px;
+  height: 100vh;
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 2px solid #FF69C7;
+  box-shadow: 0 0 20px #ff69c744;
+  background: #000;
+}
 
-    /* 상단 HUD (가로 반응형) */
-    #hud {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 50px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 0 30px;
-      background: linear-gradient(180deg, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.6) 100%);
-      border-bottom: 2px solid #ff007f;
-      font-size: 1.1rem;
-      font-weight: 900;
-      z-index: 20;
-      letter-spacing: 2px;
-    }
+#hud {
+  height: 45px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 12px;
+  border-bottom: 2px solid #FDC7FB;
+  font-size: 9px;
+  z-index: 10;
+}
 
-    #score { color: #ffffff; text-shadow: 0 0 10px #ff007f; }
-    #combo { color: #ffb3d9; text-shadow: 0 0 10px #ff007f; }
+#score { color: #ffd700; }
+#combo { color: #fcd3f2; }
 
-    #canvas-wrapper {
-      position: relative;
-      width: 100%;
-      height: 100%;
-      background-color: #000000;
-      overflow: hidden;
-    }
+#canvas-wrapper {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  background: #000;
+}
 
-    canvas {
-      position: relative;
-      width: 100%;
-      height: 100%;
-      display: block;
-      touch-action: none;
-      background-color: transparent;
-      z-index: 2;
-    }
+canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+}
 
-    /* 캐서린 핫핑크 스크래치 & 브러시 오버레이 배경 */
-    .catherine-bg {
-      position: absolute;
-      top: 0; left: 0; width: 100%; height: 100%;
-      background: 
-        radial-gradient(circle at 80% 40%, #ff007f 0%, #b30059 40%, #1a000d 85%);
-      z-index: 1;
-      pointer-events: none;
-      overflow: hidden;
-    }
+.screen {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  background: rgba(0,0,0,.94);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 20px;
+}
 
-    /* 스크래치/텍스처 무늬 연출 */
-    .catherine-bg::before {
-      content: "";
-      position: absolute;
-      top: -20%; left: -20%; width: 140%; height: 140%;
-      background: repeating-linear-gradient(
-        -45deg,
-        transparent,
-        transparent 15px,
-        rgba(0, 0, 0, 0.15) 15px,
-        rgba(0, 0, 0, 0.15) 30px
-      );
-      transform: rotate(5deg);
-    }
+.hidden { display: none !important; }
+  
+h1 {
+  color: #fcd3f2;
+  font-size: 45px;
+  line-height: 1.5;
+  margin-bottom: 16px;
+  text-shadow: 3px 3px #FF69C7;
+}
 
-    /* 오른쪽 우아한 여성 실루엣 아트 */
-    .silhouette-art {
-      position: absolute;
-      right: 2%;
-      bottom: -5%;
-      height: 105%;
-      width: 50%;
-      background: radial-gradient(ellipse at center, rgba(255, 0, 127, 0.4) 0%, transparent 70%);
-      z-index: 2;
-      pointer-events: none;
-    }
 
-    .silhouette-svg {
-      position: absolute;
-      right: 0;
-      bottom: 0;
-      height: 100%;
-      fill: #000000;
-      filter: drop-shadow(-5px 0px 15px rgba(255, 0, 127, 0.8));
-    }
+h2 {
+  font-size: 10px;
+  line-height: 1.8;
+  margin-bottom: 25px;
+}
 
-    .screen {
-      position: absolute;
-      top: 0; left: 0; width: 100%; height: 100%;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      z-index: 999;
-    }
+.start-btn, .song-select-btn {
+  background: transparent;
+  color: white;
+  border: none;
+  font-family: inherit;
+  cursor: pointer;
+  padding: 12px;
+  margin: 5px;
+  font-size: 11px;
+}
 
-    .hidden { display: none !important; }
+.start-btn:active, .song-select-btn:active {
+  color: #FF69C7;
+}
 
-    /* 좌측 상단 캘리그라피 타이틀 */
-    .catherine-title {
-      position: absolute;
-      top: 40px;
-      left: 50px;
-      text-align: left;
-    }
-
-    .catherine-title h1 {
-      font-family: 'Shrikhand', cursive;
-      font-size: 3.5rem;
-      color: #ffffff;
-      text-shadow: 4px 4px 0px #000, 6px 6px 12px #ff007f;
-      line-height: 1;
-      transform: rotate(-3deg);
-    }
-
-    .catherine-title span {
-      font-family: 'Caveat', cursive;
-      font-size: 1.5rem;
-      color: #ffc2e0;
-      display: block;
-      margin-top: 5px;
-      text-shadow: 2px 2px 4px #000;
-    }
-
-    /* 검은색 섹시한 하트 노랫선택 메뉴 프레임 */
-    .heart-menu-container {
-      position: absolute;
-      left: 8%;
-      top: 48%;
-      transform: translateY(-50%);
-      width: 460px;
-      height: 420px;
-      background: #000000;
-      /* 섹시한 곡선의 하트모양 클리핑 마스크 */
-      clip-path: path("M 230,390 C 130,300 0,220 0,130 C 0,55 60,0 135,0 C 180,0 215,25 230,60 C 245,25 280,0 325,0 C 400,0 460,55 460,130 C 460,220 330,300 230,390 Z");
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      padding: 40px 30px;
-      box-shadow: 0 0 30px rgba(0,0,0,0.9);
-      border: 3px solid #ff007f;
-    }
-
-    /* 하트 메뉴 내부 곡 리스트 */
-    .song-list {
-      width: 100%;
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-      align-items: center;
-      z-index: 10;
-    }
-
-    /* 곡 선택 버튼 & 호버/터치 발광 효과 */
-    .song-select-btn {
-      position: relative;
-      width: 85%;
-      padding: 14px 20px;
-      background: transparent;
-      color: #ffffff;
-      border: none;
-      font-family: 'Noto Sans KR', sans-serif;
-      font-weight: 900;
-      font-size: 1.15rem;
-      cursor: pointer;
-      text-align: center;
-      transition: all 0.2s ease;
-      letter-spacing: 1px;
-      overflow: hidden;
-    }
-
-    /* 버튼 밑줄 스타일 */
-    .song-select-btn::after {
-      content: "";
-      position: absolute;
-      bottom: 0; left: 10%; width: 80%;
-      height: 2px;
-      background: rgba(255, 255, 255, 0.3);
-      transition: all 0.2s ease;
-    }
-
-    /* 커서 가져다 대거나 활성화 시 브러시 백글로우 발광 연출 */
-    .song-select-btn:hover, .song-select-btn:active {
-      color: #ffffff;
-      transform: scale(1.08);
-      text-shadow: 0 0 8px #ffffff, 0 0 15px #ff007f;
-    }
-
-    .song-select-btn:hover::before, .song-select-btn:active::before {
-      content: "";
-      position: absolute;
-      top: 50%; left: 50%;
-      width: 120%; height: 80%;
-      background: radial-gradient(ellipse at center, rgba(255,0,127,0.95) 0%, rgba(255,102,178,0.6) 50%, transparent 80%);
-      transform: translate(-50%, -50%);
-      z-index: -1;
-      filter: blur(4px);
-    }
-
-    .song-select-btn:hover::after {
-      background: #ffffff;
-      box-shadow: 0 0 10px #ffffff;
-      width: 100%;
-      left: 0;
-    }
-
-    /* 일반 버튼 스타일 */
-    .catherine-btn {
-      background-color: #ff007f;
-      color: #ffffff;
-      border: 3px solid #ffffff;
-      padding: 14px 32px;
-      font-size: 1.1rem;
-      font-weight: 900;
-      cursor: pointer;
-      box-shadow: 5px 5px 0px #000;
-      transition: 0.15s;
-      letter-spacing: 1px;
-    }
-
-    .catherine-btn:hover, .catherine-btn:active {
-      background-color: #ffffff;
-      color: #ff007f;
-      box-shadow: 7px 7px 0px #ff007f;
-      transform: translate(-2px, -2px);
-    }
-
-    /* 결과 창 스타일 */
-    .result-box {
-      background: rgba(0, 0, 0, 0.95);
-      border: 4px solid #ff007f;
-      padding: 40px 60px;
-      text-align: center;
-      box-shadow: 0 0 40px rgba(255, 0, 127, 0.8);
-      position: relative;
-      z-index: 1000;
-    }
-  </style>
+.song-select-btn { font-size: 13px; }
+</style>
 </head>
+
 <body>
-
 <div id="game-container">
-  <!-- 배경 스크래치 아트워크 & 실루엣 -->
-  <div class="catherine-bg"></div>
-  <div class="silhouette-art">
-    <svg class="silhouette-svg" viewBox="0 0 400 600">
-      <path d="M250,600 C240,500 210,420 180,350 C160,300 130,250 140,180 C150,110 200,80 230,40 C210,30 180,20 150,40 C110,60 90,120 100,180 C110,240 130,280 120,340 C110,400 70,480 50,600 Z"/>
-      <circle cx="210" cy="110" r="12" fill="#ff007f"/>
-    </svg>
-  </div>
-
-  <div id="hud" class="hidden">
+  <div id="hud">
     <div>SCORE: <span id="score">000000</span></div>
     <div><span id="combo">0</span> COMBO</div>
   </div>
@@ -306,37 +131,19 @@
   <div id="canvas-wrapper">
     <canvas id="gameCanvas"></canvas>
 
-    <!-- 1단계: 시작 화면 -->
     <div id="start-screen" class="screen">
-      <div class="catherine-title">
-        <h1>CATHERINE</h1>
-        <span>82 Rhythm iPad Edition</span>
-      </div>
-
-      <div class="heart-menu-container">
-        <div style="font-family: 'Shrikhand'; font-size: 1.8rem; color: #ff007f; margin-bottom: 25px; text-shadow: 0 0 10px #ff007f;">
-          82 RHYTHM
-        </div>
-        <button id="start-game-btn" class="catherine-btn">START GAME</button>
-      </div>
+      <h1>チェキ☆リズム</h1>
+      <h2>2026 WORK BY YUN</h2>
+      <button id="start-game-btn" class="start-btn">START GAME</button>
     </div>
 
-    <!-- 2단계: 섹시한 하트 노래 선택 화면 (첨부 이미지 완전 재현) -->
     <div id="song-select-screen" class="screen hidden">
-      <div class="catherine-title">
-        <h1>VOICE & TRACK</h1>
-        <span>Choose your ideal rhythm...</span>
-      </div>
-
-      <div class="heart-menu-container">
-        <div class="song-list">
-          <button class="song-select-btn" data-song="gossip">♥ GOSSIP</button>
-          <button class="song-select-btn" data-song="trembling">♥ 떨리는 맘</button>
-        </div>
-      </div>
+      <h1>SELECT SONG</h1>
+      <h2>CHOOSE YOUR TRACK</h2>
+      <button class="song-select-btn" data-song="gossip">GOSSIP</button>
+      <button class="song-select-btn" data-song="trembling">떨리는 맘</button>
     </div>
 
-    <!-- 3단계: 랭크/결과 화면 -->
     <div id="result-screen" class="screen hidden"></div>
   </div>
 </div>
@@ -347,23 +154,29 @@ const ctx = canvas.getContext('2d');
 const wrapper = document.getElementById('canvas-wrapper');
 
 let width, height, laneWidth, judgeLineY;
+let dpr = 1;
 
-// 가로 모드 레인 배치 계산
 function resize() {
-  width = canvas.width = wrapper.clientWidth;
-  height = canvas.height = wrapper.clientHeight;
-  
-  // 가로 모드 중앙에 4개의 레인을 집중 배치
-  laneWidth = Math.min(width * 0.12, 110); 
-  judgeLineY = height - 90;
+  dpr = Math.min(window.devicePixelRatio || 1, 2);
+  width = wrapper.clientWidth;
+  height = wrapper.clientHeight;
+
+  canvas.width = Math.round(width * dpr);
+  canvas.height = Math.round(height * dpr);
+  canvas.style.width = width + 'px';
+  canvas.style.height = height + 'px';
+
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+  laneWidth = width / 4;
+  judgeLineY = height - 105;
 }
+
 window.addEventListener('resize', resize);
 resize();
 
 const bgImage = new Image();
 let isBgLoaded = false;
-bgImage.onload = () => { isBgLoaded = true; };
-bgImage.src = './cover.png';
 
 const songs = {
   gossip: {
@@ -380,7 +193,7 @@ const songs = {
 
 let activeSongKey = 'gossip';
 let currentBgm = new Audio();
-const NOTE_SPEED = 600;
+const NOTE_SPEED = 550;
 
 function generatePattern(duration, bpm, offset, seed) {
   const pattern = [];
@@ -395,7 +208,7 @@ function generatePattern(duration, bpm, offset, seed) {
   }
 
   function pickLane(exclude = []) {
-    const choices = [0, 1, 2, 3].filter(lane => !exclude.includes(lane));
+    const choices = [0,1,2,3].filter(l => !exclude.includes(l));
     return choices[Math.floor(rand() * choices.length)];
   }
 
@@ -405,35 +218,30 @@ function generatePattern(duration, bpm, offset, seed) {
     if (rand() < 0.10 && beatIndex % 4 !== 0) continue;
 
     const lane = pickLane([previousLane]);
-    pattern.push({ t: time, l: lane });
+    pattern.push({t: time, l: lane});
     previousLane = lane;
 
     if (rand() < 0.30) {
       const offbeat = time + beat / 2;
       if (offbeat < duration - 0.2) {
         const nextLane = pickLane([previousLane]);
-        pattern.push({ t: offbeat, l: nextLane });
+        pattern.push({t: offbeat, l: nextLane});
         previousLane = nextLane;
       }
     }
 
     if (rand() < 0.13 && beatIndex !== previousDouble) {
-      const secondLane = pickLane([lane]);
-      pattern.push({ t: time, l: secondLane });
+      pattern.push({t: time, l: pickLane([lane])});
       previousDouble = beatIndex;
     }
   }
 
   return pattern
-    .sort((a, b) => a.t - b.t || a.l - b.l)
-    .map(note => ({
-      time: Number(note.t.toFixed(3)),
-      lane: note.l
-    }));
+    .sort((a,b) => a.t - b.t || a.l - b.l)
+    .map(n => ({time: Number(n.t.toFixed(3)), lane: n.l}));
 }
 
 let isPlaying = false;
-let startTime = 0;
 let score = 0;
 let combo = 0;
 let maxCombo = 0;
@@ -441,129 +249,281 @@ let perfectCount = 0;
 let greatCount = 0;
 let missCount = 0;
 let activeNotes = [];
+let effects = [];
 
 function goToSongSelect() {
   document.getElementById('start-screen').classList.add('hidden');
   document.getElementById('song-select-screen').classList.remove('hidden');
   document.getElementById('result-screen').classList.add('hidden');
-  document.getElementById('hud').classList.add('hidden');
 }
 
 function startGame(songKey) {
+  const song = songs[songKey];
+  if (!song) return;
+
   activeSongKey = songKey;
-  const selectedSong = songs[songKey];
-  if (!selectedSong) return;
+  score = combo = maxCombo = 0;
+  perfectCount = greatCount = missCount = 0;
+  effects = [];
 
-  score = 0;
-  combo = 0;
-  maxCombo = 0;
-  perfectCount = 0;
-  greatCount = 0;
-  missCount = 0;
-  
-  isBgLoaded = false;
-  bgImage.src = selectedSong.bg;
-  bgImage.onload = () => { isBgLoaded = true; };
+  activeNotes = song.pattern.map(n => ({
+    ...n, hit: false, missed: false
+  }));
 
-  activeNotes = selectedSong.pattern.map(n => ({ ...n, hit: false, missed: false }));
-  
   document.getElementById('start-screen').classList.add('hidden');
   document.getElementById('song-select-screen').classList.add('hidden');
   document.getElementById('result-screen').classList.add('hidden');
-  document.getElementById('hud').classList.remove('hidden');
 
-  document.getElementById('score').innerText = '000000';
-  document.getElementById('combo').innerText = '0';
+  updateHUD();
 
-  currentBgm.src = selectedSong.src;
-  currentBgm.currentTime = 0;
-  
-  const playPromise = currentBgm.play();
-  if (playPromise !== undefined) {
-    playPromise.catch(error => console.log("Audio play blocked:", error));
-  }
-  
-  currentBgm.onended = () => { endGame(); };
+  bgImage.onload = () => { isBgLoaded = true; };
+  bgImage.onerror = () => { isBgLoaded = false; };
+  isBgLoaded = false;
+  bgImage.src = song.bg;
+
+  currentBgm.pause();
+  currentBgm = new Audio(song.src);
+  currentBgm.onended = endGame;
 
   isPlaying = true;
-  startTime = performance.now();
+  lastFrameTime = 0;
+  currentBgm.play().catch(err => console.log('Audio error:', err));
+
   requestAnimationFrame(gameLoop);
 }
 
 function updateHUD() {
-  document.getElementById('score').innerText = String(score).padStart(6, '0');
-  document.getElementById('combo').innerText = combo;
+  document.getElementById('score').textContent = String(score).padStart(6,'0');
+  document.getElementById('combo').textContent = combo;
 }
 
-// 메인 게임 루프 (이펙트 문구 표시 완전 제거)
+/* 오각별 */
+function drawStar(x, y, outerRadius, innerRadius, rotation = 0) {
+  ctx.beginPath();
+
+  for (let i = 0; i < 10; i++) {
+    const angle = rotation - Math.PI / 2 + i * Math.PI / 5;
+    const radius = i % 2 === 0 ? outerRadius : innerRadius;
+    const px = x + Math.cos(angle) * radius;
+    const py = y + Math.sin(angle) * radius;
+
+    if (i === 0) ctx.moveTo(px, py);
+    else ctx.lineTo(px, py);
+  }
+
+  ctx.closePath();
+}
+
+/* 성공 판정 입력 때만 이펙트 생성 */
+function addEffect(lane) {
+  const x = lane * laneWidth + laneWidth / 2;
+  const y = judgeLineY;
+
+  effects.push({
+    x, y,
+    age: 0,
+    duration: 480,
+    stars: Array.from({length: 5}, (_, i) => {
+      const angle = Math.PI * 2 * i / 5 + Math.random() * 0.35;
+      return {
+        angle,
+        distance: 20 + Math.random() * 30,
+        size: 6 + Math.random() * 7,
+        rotation: Math.random() * Math.PI
+      };
+    })
+  });
+}
+
+
+function drawEffects(delta) {
+  for (let i = effects.length - 1; i >= 0; i--) {
+    const e = effects[i];
+    e.age += delta;
+
+    const p = Math.min(e.age / e.duration, 1);
+    const alpha = 1 - p;
+    const radius = 10 + p * 68;
+
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+
+    // 핑크빛 발광 원형 파동
+    ctx.globalAlpha = alpha;
+    ctx.strokeStyle = '#ff9cf4';
+    ctx.lineWidth = Math.max(1, 4 * (1 - p));
+    ctx.shadowColor = '#ff69e8';
+    ctx.shadowBlur = 22;
+
+    ctx.beginPath();
+    ctx.ellipse(e.x, e.y, radius, radius * 0.45, 0, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // 중심부의 핑크빛 조명
+    const glow = ctx.createRadialGradient(
+      e.x, e.y, 0,
+      e.x, e.y, 38 * (1 - p) + 3
+    );
+
+    glow.addColorStop(0, `rgba(255,255,255,${alpha})`);
+    glow.addColorStop(0.3, `rgba(255,160,245,${alpha * 0.75})`);
+    glow.addColorStop(1, 'rgba(255,80,220,0)');
+
+    ctx.fillStyle = glow;
+    ctx.beginPath();
+    ctx.arc(e.x, e.y, 42 * (1 - p) + 3, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 흰색 별 + 핑크 발광
+    for (const star of e.stars) {
+      const dist = star.distance * (0.35 + p * 1.1);
+      const sx = e.x + Math.cos(star.angle) * dist;
+      const sy = e.y + Math.sin(star.angle) * dist * 0.6;
+      const size = star.size * (1 - p * 0.65);
+
+      ctx.globalAlpha = alpha;
+      ctx.fillStyle = '#fff';
+      ctx.shadowColor = '#ff75eb';
+      ctx.shadowBlur = 18;
+
+      drawStar(sx, sy, size, size * 0.42, star.rotation + p);
+      ctx.fill();
+    }
+
+    ctx.restore();
+
+    if (e.age >= e.duration) {
+      effects.splice(i, 1);
+    }
+  }
+}
+
+
+let lastFrameTime = 0;
+
 function gameLoop(timestamp) {
   if (!isPlaying) return;
 
-  const currentTime = currentBgm.currentTime;
+  const delta = lastFrameTime ? Math.min(timestamp-lastFrameTime, 40) : 16;
+  lastFrameTime = timestamp;
 
-  if (currentBgm.ended || currentTime >= currentBgm.duration) {
+  if (currentBgm.ended) {
     endGame();
     return;
   }
 
-  ctx.clearRect(0, 0, width, height);
+  const currentTime = currentBgm.currentTime;
 
-  const startX = (width - laneWidth * 4) / 2;
+  ctx.clearRect(0,0,width,height);
 
-  // 가로 중앙 리듬게임 트랙 배경
-  ctx.fillStyle = 'rgba(0, 0, 0, 0.75)';
-  ctx.fillRect(startX, 0, laneWidth * 4, height);
+  if (isBgLoaded && bgImage.complete && bgImage.naturalWidth) {
+    ctx.drawImage(bgImage,0,0,width,height);
+    ctx.fillStyle = 'rgba(0,0,0,0.48)';
+    ctx.fillRect(0,0,width,height);
+  } else {
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0,0,width,height);
+  }
 
-  // 레인 구분선
-  ctx.strokeStyle = 'rgba(255, 0, 127, 0.4)';
-  ctx.lineWidth = 2;
-  for (let i = 0; i <= 4; i++) {
+  /* 레인 구분선 */
+  ctx.strokeStyle = 'rgba(120,210,255,0.13)';
+  ctx.lineWidth = 1;
+
+  for (let i=1; i<4; i++) {
     ctx.beginPath();
-    ctx.moveTo(startX + i * laneWidth, 0);
-    ctx.lineTo(startX + i * laneWidth, height);
+    ctx.moveTo(i*laneWidth,0);
+    ctx.lineTo(i*laneWidth,height);
     ctx.stroke();
   }
 
-  // 판정선 (핫핑크 글로우)
-  ctx.strokeStyle = '#ff007f';
+  /* 전체 레인을 관통하는 하나의 판정선 */
+  ctx.save();
+  ctx.shadowColor = '#ff69c7';
+  ctx.shadowBlur = 13;
+  ctx.strokeStyle = 'rgba(255,160,245,0.95)';
   ctx.lineWidth = 4;
-  ctx.shadowColor = '#ff007f';
-  ctx.shadowBlur = 10;
+
   ctx.beginPath();
-  ctx.moveTo(startX, judgeLineY);
-  ctx.lineTo(startX + laneWidth * 4, judgeLineY);
+  ctx.moveTo(0,judgeLineY);
+  ctx.lineTo(width,judgeLineY);
   ctx.stroke();
+
   ctx.shadowBlur = 0;
+  ctx.strokeStyle = 'rgba(255,255,255,0.9)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(0,judgeLineY);
+  ctx.lineTo(width,judgeLineY);
+  ctx.stroke();
+  ctx.restore();
 
-  // 노트 렌더링
-  activeNotes.forEach(note => {
-    if (note.hit) return;
+  /* 반투명 사이버 네온 타일 */
+  
+  /* 하트 십자 네온 타일 */
+  for (const note of activeNotes) {
+    if (note.hit || note.missed) continue;
 
-    const timeDiff = note.time - currentTime;
-    const noteY = judgeLineY - (timeDiff * NOTE_SPEED);
-    const noteHeight = 18;
+    const timeDiff = note.time-currentTime;
+    const noteY = judgeLineY-timeDiff*NOTE_SPEED;
 
-    if (timeDiff < -0.18 && !note.missed) {
+    if (timeDiff < -0.18) {
       note.missed = true;
       combo = 0;
       missCount++;
       updateHUD();
+      continue;
     }
 
-    if (noteY > -20 && noteY < height + 20 && !note.missed) {
-      const x = startX + note.lane * laneWidth + 6;
-      const w = laneWidth - 12;
-      const mainColor = (note.lane === 0 || note.lane === 3) ? '#ffffff' : '#ff007f';
+    if (noteY > -40 && noteY < height+40) {
+      const x = note.lane*laneWidth + laneWidth/2;
+      const y = noteY;
 
       ctx.save();
-      ctx.fillStyle = mainColor;
-      ctx.shadowColor = mainColor;
-      ctx.shadowBlur = 10;
-      ctx.fillRect(x, noteY - noteHeight / 2, w, noteHeight);
+      ctx.translate(x, y);
+
+      // 레인 폭과 노트 높이에 맞춰 모양 크기 조절
+      const s = Math.min((laneWidth-18)/100, 0.28);
+      ctx.scale(s, s);
+
+      // 판정선과 어울리는 연핑크 발광
+      ctx.strokeStyle = '#ffc4f2';
+      ctx.lineWidth = 7;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.shadowColor = '#ff69c7';
+      ctx.shadowBlur = 18;
+
+      ctx.beginPath();
+
+      // 위쪽 세로 막대와 하트 윗부분
+      ctx.moveTo(0, -28);
+      ctx.lineTo(0, -8);
+
+      ctx.moveTo(0, -8);
+      ctx.bezierCurveTo(-12, -23, -37, -22, -37, -3);
+      ctx.bezierCurveTo(-37, 10, -17, 25, 0, 38);
+      ctx.bezierCurveTo(17, 25, 37, 10, 37, -3);
+      ctx.bezierCurveTo(37, -22, 12, -23, 0, -8);
+
+      // 아래쪽 세로 막대
+      ctx.moveTo(0, 24);
+      ctx.lineTo(0, 43);
+
+      // 좌우 가로 막대
+      ctx.moveTo(-47, 3);
+      ctx.lineTo(-25, 3);
+
+      ctx.moveTo(25, 3);
+      ctx.lineTo(47, 3);
+
+      ctx.stroke();
+
       ctx.restore();
     }
-  });
+  }
 
+
+  drawEffects(delta);
   requestAnimationFrame(gameLoop);
 }
 
@@ -571,125 +531,108 @@ function triggerInput(lane) {
   if (!isPlaying) return;
 
   const currentTime = currentBgm.currentTime;
-  const target = activeNotes.find(n => n.lane === lane && !n.hit && !n.missed);
 
-  if (target) {
-    const diff = Math.abs(target.time - currentTime);
-    
-    if (diff <= 0.15) {
-      target.hit = true;
-      combo++;
-      if (combo > maxCombo) maxCombo = combo;
-      
-      const isPerfect = diff <= 0.07;
-      if (isPerfect) {
-        perfectCount++;
-        score += 1000;
-      } else {
-        greatCount++;
-        score += 500;
-      }
-      
-      updateHUD();
+  const target = activeNotes.find(n =>
+    n.lane===lane && !n.hit && !n.missed
+  );
+
+  if (!target) return;
+
+  const diff = Math.abs(target.time-currentTime);
+
+  if (diff <= 0.15) {
+    target.hit = true;
+
+    combo++;
+    maxCombo = Math.max(maxCombo,combo);
+
+    if (diff <= 0.07) {
+      perfectCount++;
+      score += 1000;
+    } else {
+      greatCount++;
+      score += 500;
     }
+
+    /* 성공 입력에서만 별 이펙트 */
+    addEffect(lane);
+    updateHUD();
   }
 }
 
 function endGame() {
   if (!isPlaying) return;
+
   isPlaying = false;
-  try { currentBgm.pause(); } catch(e) {}
+  currentBgm.pause();
 
   const totalNotes = songs[activeSongKey].pattern.length;
-  const maxPossibleScore = totalNotes * 1000;
-  const accuracy = maxPossibleScore > 0 ? (score / maxPossibleScore) * 100 : 0;
+  const accuracy = totalNotes ? score/(totalNotes*1000)*100 : 0;
 
   let rank = 'F';
-  if (accuracy >= 90) rank = 'S';
-  else if (accuracy >= 80) rank = 'A';
-  else if (accuracy >= 70) rank = 'B';
-  else if (accuracy >= 60) rank = 'C';
+  let message = 'STAGE FAILED... TRY AGAIN!';
+  let color = '#ff4444';
 
-  document.getElementById('hud').classList.add('hidden');
+  if (accuracy >= 90) {
+    rank='S'; message='AMAZING! PERFECT RHYTHM!'; color='#ffd700';
+  } else if (accuracy >= 80) {
+    rank='A'; message='GREAT JOB!'; color='#FD5DBD';
+  } else if (accuracy >= 70) {
+    rank='B'; message='GOOD!'; color='#00fff2';
+  } else if (accuracy >= 60) {
+    rank='C'; message='CLEAR!'; color='#ff8800';
+  }
 
-  const resultScreen = document.getElementById('result-screen');
-  resultScreen.innerHTML = `
-    <div class="result-box">
-      <div style="font-size: 5rem; font-family: 'Shrikhand'; color: #ffffff; text-shadow: 4px 4px 0px #ff007f; margin-bottom: 10px;">${rank}</div>
-      
-      <div style="font-size: 1.0rem; line-height: 2.2; margin-bottom: 30px; text-align: left; border-top: 2px solid #ff007f; border-bottom: 2px solid #ff007f; padding: 15px 0;">
-        <p style="color:#ffffff;">PERFECT : ${perfectCount}</p>
-        <p style="color:#ffb3d9;">GREAT   : ${greatCount}</p>
-        <p style="color:#ff4444;">MISS    : ${missCount}</p>
-        <p style="color:#ff007f; font-weight: bold; margin-top: 5px;">MAX COMBO : ${maxCombo}</p>
-      </div>
-      
-      <button id="retry-btn" class="catherine-btn" style="margin-right: 15px;">RETRY</button>
-      <button id="select-song-btn" class="catherine-btn">SELECT SONG</button>
+  const result = document.getElementById('result-screen');
+
+  result.innerHTML = `
+    <div style="font-size:65px;color:white;text-shadow:0 0 20px ${color};margin-bottom:10px">${rank}</div>
+    <div style="font-size:9px;color:#fcd3f2;line-height:2;margin-bottom:20px">${message}</div>
+    <div style="font-size:10px;line-height:2.5;text-align:left;margin-bottom:20px">
+      <p style="color:#00fff2">PERFECT : ${perfectCount}</p>
+      <p style="color:#fcd3f2">GREAT : ${greatCount}</p>
+      <p style="color:#ff4444">MISS : ${missCount}</p>
+      <hr style="border:0;border-top:1px solid #555;margin:8px 0">
+      <p>MAX COMBO : ${maxCombo}</p>
     </div>
+    <button id="retry-btn" class="start-btn">RETRY</button>
+    <button id="select-song-btn" class="start-btn">SELECT SONG</button>
   `;
-  resultScreen.classList.remove('hidden');
 
-  document.getElementById('retry-btn').addEventListener('click', () => startGame(activeSongKey));
-  document.getElementById('retry-btn').addEventListener('touchend', (e) => { e.preventDefault(); startGame(activeSongKey); });
-
-  document.getElementById('select-song-btn').addEventListener('click', goToSongSelect);
-  document.getElementById('select-song-btn').addEventListener('touchend', (e) => { e.preventDefault(); goToSongSelect(); });
+  result.classList.remove('hidden');
+  document.getElementById('retry-btn').onclick = () => startGame(activeSongKey);
+  document.getElementById('select-song-btn').onclick = goToSongSelect;
 }
 
-// 터치 및 이벤트 매핑
-document.getElementById('start-game-btn').addEventListener('click', goToSongSelect);
-document.getElementById('start-game-btn').addEventListener('touchend', (e) => {
-  e.preventDefault();
-  goToSongSelect();
-});
+document.getElementById('start-game-btn').addEventListener('click',goToSongSelect);
 
 document.querySelectorAll('.song-select-btn').forEach(btn => {
-  const songKey = btn.getAttribute('data-song');
-  btn.addEventListener('click', () => startGame(songKey));
-  btn.addEventListener('touchend', (e) => {
-    e.preventDefault();
-    startGame(songKey);
-  });
+  btn.addEventListener('click',() => startGame(btn.dataset.song));
 });
 
-const keyMap = { d: 0, f: 1, j: 2, k: 3 };
-document.addEventListener('keydown', (e) => {
+/* 블루투스 키보드: D F J K */
+const keyMap = {d:0,f:1,j:2,k:3};
+
+document.addEventListener('keydown',e => {
   const key = e.key.toLowerCase();
   if (!(key in keyMap)) return;
+
   e.preventDefault();
-  if (!isPlaying) return;
   triggerInput(keyMap[key]);
 });
 
-// 아이패드 가로 터치 영토 계산
-canvas.addEventListener('touchstart', (e) => {
+/* 터치 입력 */
+canvas.addEventListener('pointerdown',e => {
   if (!isPlaying) return;
+
   e.preventDefault();
+
   const rect = canvas.getBoundingClientRect();
-  const startX = (width - laneWidth * 4) / 2;
+  const x = (e.clientX-rect.left)*(width/rect.width);
+  const lane = Math.floor(x/laneWidth);
 
-  for (let i = 0; i < e.touches.length; i++) {
-    const touchX = e.touches[i].clientX - rect.left;
-    if (touchX >= startX && touchX <= startX + laneWidth * 4) {
-      const lane = Math.floor((touchX - startX) / laneWidth);
-      if (lane >= 0 && lane < 4) triggerInput(lane);
-    }
-  }
-}, { passive: false });
-
-canvas.addEventListener('mousedown', (e) => {
-  if (!isPlaying) return;
-  const rect = canvas.getBoundingClientRect();
-  const startX = (width - laneWidth * 4) / 2;
-  const touchX = e.clientX - rect.left;
-
-  if (touchX >= startX && touchX <= startX + laneWidth * 4) {
-    const lane = Math.floor((touchX - startX) / laneWidth);
-    if (lane >= 0 && lane < 4) triggerInput(lane);
-  }
+  if (lane>=0 && lane<4) triggerInput(lane);
 });
 </script>
-
 </body>
 </html>
