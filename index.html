@@ -5,14 +5,15 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>チェキ☆リズム</title>
-<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=DotGothic16&display=swap" rel="stylesheet">
 
 <style>
 * {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
-  user-select: none; 
+  user-select: none;
   -webkit-user-select: none;
 }
 
@@ -85,45 +86,94 @@ canvas {
   padding: 20px;
 }
 
-.hidden { display: none !important; }
-  
+.hidden {
+  display: none !important;
+}
+
+/* 공통 제목 */
 h1 {
   color: #fcd3f2;
-  font-size: 45px;
   line-height: 1.5;
   margin-bottom: 16px;
   text-shadow: 3px 3px #e664b7;
-  -webkit-text-stroke: 1px #000000;
+  -webkit-text-stroke: 1px #000;
 }
 
+/* 일본어 도트 폰트 */
+.jp-title {
+  font-family: 'DotGothic16', sans-serif;
+  font-size: 36px;
+  font-weight: 400;
+  white-space: nowrap;
+  letter-spacing: 0;
+}
+
+/* 영어 픽셀 폰트 */
+.en-title {
+  font-family: 'Press Start 2P', cursive;
+  font-size: 25px;
+  white-space: nowrap;
+  letter-spacing: -1px;
+}
 
 h2 {
+  font-family: 'Press Start 2P', cursive;
   font-size: 10px;
   line-height: 1.8;
   margin-bottom: 25px;
 }
 
-.start-btn, .song-select-btn {
+.start-btn,
+.song-select-btn {
   background: transparent;
   color: white;
   border: none;
-  font-family: inherit;
+  font-family: 'Press Start 2P', cursive;
   cursor: pointer;
   padding: 12px;
   margin: 5px;
   font-size: 11px;
 }
 
-.start-btn:active, .song-select-btn:active {
+.start-btn:active,
+.song-select-btn:active {
   color: #FF69C7;
 }
 
-.song-select-btn { font-size: 13px; }
+.song-select-btn {
+  font-size: 11px;
+}
+
+/* 일본어 곡명 */
+.song-jp {
+  font-family: 'DotGothic16', sans-serif;
+  font-size: 20px;
+}
+
+/* 작은 화면에서도 제목이 잘리지 않도록 */
+@media (max-width: 360px) {
+  .jp-title {
+    font-size: 30px;
+  }
+
+  .en-title {
+    font-size: 19px;
+  }
+
+  h2 {
+    font-size: 8px;
+  }
+
+  .song-jp {
+    font-size: 18px;
+  }
+}
 </style>
 </head>
 
 <body>
 <div id="game-container">
+
   <div id="hud">
     <div>SCORE: <span id="score">000000</span></div>
     <div><span id="combo">0</span> COMBO</div>
@@ -133,16 +183,16 @@ h2 {
     <canvas id="gameCanvas"></canvas>
 
     <div id="start-screen" class="screen">
-      <h1>チェキ☆リズム</h1>
+      <h1 class="jp-title">チェキ☆リズム</h1>
       <h2>2026 WORK BY YUN</h2>
       <button id="start-game-btn" class="start-btn">START GAME</button>
     </div>
 
     <div id="song-select-screen" class="screen hidden">
-      <h1>SELECT SONG</h1>
+      <h1 class="en-title">SELECT SONG</h1>
       <h2>CHOOSE YOUR TRACK</h2>
-      <button class="song-select-btn" data-song="Trembling">チェキ☆ラブ(JP)</button>
-      <button class="song-select-btn" data-song="trembling">チェキ☆ラブ(KR）</button>
+      <button class="song-select-btn song-jp" data-song="Trembling">チェキ☆ラブ (JP)</button>
+      <button class="song-select-btn song-jp" data-song="trembling">チェキ☆ラブ (KR)</button>
     </div>
 
     <div id="result-screen" class="screen hidden"></div>
@@ -179,6 +229,53 @@ resize();
 const bgImage = new Image();
 let isBgLoaded = false;
 
+function generatePattern(duration, bpm, offset, seed) {
+  const pattern = [];
+  const beat = 60 / bpm;
+  let state = seed >>> 0;
+  let previousLane = -1;
+  let previousDouble = -1;
+
+  function rand() {
+    state = (state * 1664525 + 1013904223) >>> 0;
+    return state / 4294967296;
+  }
+
+  function pickLane(exclude = []) {
+    const choices = [0, 1, 2, 3].filter(l => !exclude.includes(l));
+    return choices[Math.floor(rand() * choices.length)];
+  }
+
+  let beatIndex = 0;
+
+  for (let time = offset; time < duration - 0.2; time += beat, beatIndex++) {
+    if (rand() < 0.10 && beatIndex % 4 !== 0) continue;
+
+    const lane = pickLane([previousLane]);
+    pattern.push({ t: time, l: lane });
+    previousLane = lane;
+
+    if (rand() < 0.30) {
+      const offbeat = time + beat / 2;
+
+      if (offbeat < duration - 0.2) {
+        const nextLane = pickLane([previousLane]);
+        pattern.push({ t: offbeat, l: nextLane });
+        previousLane = nextLane;
+      }
+    }
+
+    if (rand() < 0.13 && beatIndex !== previousDouble) {
+      pattern.push({ t: time, l: pickLane([lane]) });
+      previousDouble = beatIndex;
+    }
+  }
+
+  return pattern
+    .sort((a, b) => a.t - b.t || a.l - b.l)
+    .map(n => ({ time: Number(n.t.toFixed(3)), lane: n.l }));
+}
+
 const songs = {
   Trembling: {
     src: './Trembling.mp3',
@@ -194,53 +291,8 @@ const songs = {
 
 let activeSongKey = 'Trembling';
 let currentBgm = new Audio();
+
 const NOTE_SPEED = 550;
-
-function generatePattern(duration, bpm, offset, seed) {
-  const pattern = [];
-  const beat = 60 / bpm;
-  let state = seed >>> 0;
-  let previousLane = -1;
-  let previousDouble = -1;
-
-  function rand() {
-    state = (state * 1664525 + 1013904223) >>> 0;
-    return state / 4294967296;
-  }
-
-  function pickLane(exclude = []) {
-    const choices = [0,1,2,3].filter(l => !exclude.includes(l));
-    return choices[Math.floor(rand() * choices.length)];
-  }
-
-  let beatIndex = 0;
-
-  for (let time = offset; time < duration - 0.2; time += beat, beatIndex++) {
-    if (rand() < 0.10 && beatIndex % 4 !== 0) continue;
-
-    const lane = pickLane([previousLane]);
-    pattern.push({t: time, l: lane});
-    previousLane = lane;
-
-    if (rand() < 0.30) {
-      const offbeat = time + beat / 2;
-      if (offbeat < duration - 0.2) {
-        const nextLane = pickLane([previousLane]);
-        pattern.push({t: offbeat, l: nextLane});
-        previousLane = nextLane;
-      }
-    }
-
-    if (rand() < 0.13 && beatIndex !== previousDouble) {
-      pattern.push({t: time, l: pickLane([lane])});
-      previousDouble = beatIndex;
-    }
-  }
-
-  return pattern
-    .sort((a,b) => a.t - b.t || a.l - b.l)
-    .map(n => ({time: Number(n.t.toFixed(3)), lane: n.l}));
-}
 
 let isPlaying = false;
 let score = 0;
@@ -251,6 +303,14 @@ let greatCount = 0;
 let missCount = 0;
 let activeNotes = [];
 let effects = [];
+let lastFrameTime = 0;
+
+function updateHUD() {
+  document.getElementById('score').textContent =
+    String(score).padStart(6, '0');
+
+  document.getElementById('combo').textContent = combo;
+}
 
 function goToSongSelect() {
   document.getElementById('start-screen').classList.add('hidden');
@@ -262,13 +322,24 @@ function startGame(songKey) {
   const song = songs[songKey];
   if (!song) return;
 
+  isPlaying = false;
+
+  currentBgm.pause();
+  currentBgm.onended = null;
+
   activeSongKey = songKey;
-  score = combo = maxCombo = 0;
-  perfectCount = greatCount = missCount = 0;
+  score = 0;
+  combo = 0;
+  maxCombo = 0;
+  perfectCount = 0;
+  greatCount = 0;
+  missCount = 0;
   effects = [];
 
   activeNotes = song.pattern.map(n => ({
-    ...n, hit: false, missed: false
+    ...n,
+    hit: false,
+    missed: false
   }));
 
   document.getElementById('start-screen').classList.add('hidden');
@@ -282,20 +353,17 @@ function startGame(songKey) {
   isBgLoaded = false;
   bgImage.src = song.bg;
 
-  currentBgm.pause();
   currentBgm = new Audio(song.src);
   currentBgm.onended = endGame;
 
   isPlaying = true;
   lastFrameTime = 0;
-  currentBgm.play().catch(err => console.log('Audio error:', err));
+
+  currentBgm.play().catch(err => {
+    console.error('Audio error:', err);
+  });
 
   requestAnimationFrame(gameLoop);
-}
-
-function updateHUD() {
-  document.getElementById('score').textContent = String(score).padStart(6,'0');
-  document.getElementById('combo').textContent = combo;
 }
 
 /* 오각별 */
@@ -315,27 +383,21 @@ function drawStar(x, y, outerRadius, innerRadius, rotation = 0) {
   ctx.closePath();
 }
 
-/* 성공 판정 입력 때만 이펙트 생성 */
+/* 성공 입력 이펙트 */
 function addEffect(lane) {
-  const x = lane * laneWidth + laneWidth / 2;
-  const y = judgeLineY;
-
   effects.push({
-    x, y,
+    x: lane * laneWidth + laneWidth / 2,
+    y: judgeLineY,
     age: 0,
     duration: 480,
-    stars: Array.from({length: 5}, (_, i) => {
-      const angle = Math.PI * 2 * i / 5 + Math.random() * 0.35;
-      return {
-        angle,
-        distance: 20 + Math.random() * 30,
-        size: 6 + Math.random() * 7,
-        rotation: Math.random() * Math.PI
-      };
-    })
+    stars: Array.from({ length: 5 }, () => ({
+      angle: Math.random() * Math.PI * 2,
+      distance: 20 + Math.random() * 30,
+      size: 6 + Math.random() * 7,
+      rotation: Math.random() * Math.PI
+    }))
   });
 }
-
 
 function drawEffects(delta) {
   for (let i = effects.length - 1; i >= 0; i--) {
@@ -348,8 +410,6 @@ function drawEffects(delta) {
 
     ctx.save();
     ctx.globalCompositeOperation = 'lighter';
-
-    // 핑크빛 발광 원형 파동
     ctx.globalAlpha = alpha;
     ctx.strokeStyle = '#ff9cf4';
     ctx.lineWidth = Math.max(1, 4 * (1 - p));
@@ -360,7 +420,6 @@ function drawEffects(delta) {
     ctx.ellipse(e.x, e.y, radius, radius * 0.45, 0, 0, Math.PI * 2);
     ctx.stroke();
 
-    // 중심부의 핑크빛 조명
     const glow = ctx.createRadialGradient(
       e.x, e.y, 0,
       e.x, e.y, 38 * (1 - p) + 3
@@ -375,7 +434,6 @@ function drawEffects(delta) {
     ctx.arc(e.x, e.y, 42 * (1 - p) + 3, 0, Math.PI * 2);
     ctx.fill();
 
-    // 흰색 별 + 핑크 발광
     for (const star of e.stars) {
       const dist = star.distance * (0.35 + p * 1.1);
       const sx = e.x + Math.cos(star.angle) * dist;
@@ -399,13 +457,13 @@ function drawEffects(delta) {
   }
 }
 
-
-let lastFrameTime = 0;
-
 function gameLoop(timestamp) {
   if (!isPlaying) return;
 
-  const delta = lastFrameTime ? Math.min(timestamp-lastFrameTime, 40) : 16;
+  const delta = lastFrameTime
+    ? Math.min(timestamp - lastFrameTime, 40)
+    : 16;
+
   lastFrameTime = timestamp;
 
   if (currentBgm.ended) {
@@ -415,29 +473,29 @@ function gameLoop(timestamp) {
 
   const currentTime = currentBgm.currentTime;
 
-  ctx.clearRect(0,0,width,height);
+  ctx.clearRect(0, 0, width, height);
 
   if (isBgLoaded && bgImage.complete && bgImage.naturalWidth) {
-    ctx.drawImage(bgImage,0,0,width,height);
+    ctx.drawImage(bgImage, 0, 0, width, height);
     ctx.fillStyle = 'rgba(0,0,0,0.48)';
-    ctx.fillRect(0,0,width,height);
+    ctx.fillRect(0, 0, width, height);
   } else {
     ctx.fillStyle = '#000';
-    ctx.fillRect(0,0,width,height);
+    ctx.fillRect(0, 0, width, height);
   }
 
   /* 레인 구분선 */
   ctx.strokeStyle = 'rgba(120,210,255,0.13)';
   ctx.lineWidth = 1;
 
-  for (let i=1; i<4; i++) {
+  for (let i = 1; i < 4; i++) {
     ctx.beginPath();
-    ctx.moveTo(i*laneWidth,0);
-    ctx.lineTo(i*laneWidth,height);
+    ctx.moveTo(i * laneWidth, 0);
+    ctx.lineTo(i * laneWidth, height);
     ctx.stroke();
   }
 
-  /* 전체 레인을 관통하는 하나의 판정선 */
+  /* 판정선 */
   ctx.save();
   ctx.shadowColor = '#ff69c7';
   ctx.shadowBlur = 13;
@@ -445,27 +503,26 @@ function gameLoop(timestamp) {
   ctx.lineWidth = 4;
 
   ctx.beginPath();
-  ctx.moveTo(0,judgeLineY);
-  ctx.lineTo(width,judgeLineY);
+  ctx.moveTo(0, judgeLineY);
+  ctx.lineTo(width, judgeLineY);
   ctx.stroke();
 
   ctx.shadowBlur = 0;
   ctx.strokeStyle = 'rgba(255,255,255,0.9)';
   ctx.lineWidth = 1;
+
   ctx.beginPath();
-  ctx.moveTo(0,judgeLineY);
-  ctx.lineTo(width,judgeLineY);
+  ctx.moveTo(0, judgeLineY);
+  ctx.lineTo(width, judgeLineY);
   ctx.stroke();
   ctx.restore();
 
-  /* 반투명 사이버 네온 타일 */
-  
-  /* 하트 십자 네온 타일 */
+  /* 하트 십자 네온 노트 */
   for (const note of activeNotes) {
     if (note.hit || note.missed) continue;
 
-    const timeDiff = note.time-currentTime;
-    const noteY = judgeLineY-timeDiff*NOTE_SPEED;
+    const timeDiff = note.time - currentTime;
+    const noteY = judgeLineY - timeDiff * NOTE_SPEED;
 
     if (timeDiff < -0.18) {
       note.missed = true;
@@ -475,18 +532,15 @@ function gameLoop(timestamp) {
       continue;
     }
 
-    if (noteY > -40 && noteY < height+40) {
-      const x = note.lane*laneWidth + laneWidth/2;
-      const y = noteY;
+    if (noteY > -40 && noteY < height + 40) {
+      const x = note.lane * laneWidth + laneWidth / 2;
 
       ctx.save();
-      ctx.translate(x, y);
+      ctx.translate(x, noteY);
 
-      // 레인 폭과 노트 높이에 맞춰 모양 크기 조절
-      const s = Math.min((laneWidth-18)/100, 0.28);
+      const s = Math.min((laneWidth - 18) / 100, 0.28);
       ctx.scale(s, s);
 
-      // 판정선과 어울리는 연핑크 발광
       ctx.strokeStyle = '#ffc4f2';
       ctx.lineWidth = 7;
       ctx.lineCap = 'round';
@@ -496,7 +550,6 @@ function gameLoop(timestamp) {
 
       ctx.beginPath();
 
-      // 위쪽 세로 막대와 하트 윗부분
       ctx.moveTo(0, -28);
       ctx.lineTo(0, -8);
 
@@ -506,11 +559,9 @@ function gameLoop(timestamp) {
       ctx.bezierCurveTo(17, 25, 37, 10, 37, -3);
       ctx.bezierCurveTo(37, -22, 12, -23, 0, -8);
 
-      // 아래쪽 세로 막대
       ctx.moveTo(0, 24);
       ctx.lineTo(0, 43);
 
-      // 좌우 가로 막대
       ctx.moveTo(-47, 3);
       ctx.lineTo(-25, 3);
 
@@ -518,11 +569,9 @@ function gameLoop(timestamp) {
       ctx.lineTo(47, 3);
 
       ctx.stroke();
-
       ctx.restore();
     }
   }
-
 
   drawEffects(delta);
   requestAnimationFrame(gameLoop);
@@ -534,18 +583,18 @@ function triggerInput(lane) {
   const currentTime = currentBgm.currentTime;
 
   const target = activeNotes.find(n =>
-    n.lane===lane && !n.hit && !n.missed
+    n.lane === lane && !n.hit && !n.missed
   );
 
   if (!target) return;
 
-  const diff = Math.abs(target.time-currentTime);
+  const diff = Math.abs(target.time - currentTime);
 
   if (diff <= 0.15) {
     target.hit = true;
 
     combo++;
-    maxCombo = Math.max(maxCombo,combo);
+    maxCombo = Math.max(maxCombo, combo);
 
     if (diff <= 0.07) {
       perfectCount++;
@@ -555,7 +604,6 @@ function triggerInput(lane) {
       score += 500;
     }
 
-    /* 성공 입력에서만 별 이펙트 */
     addEffect(lane);
     updateHUD();
   }
@@ -568,26 +616,36 @@ function endGame() {
   currentBgm.pause();
 
   const totalNotes = songs[activeSongKey].pattern.length;
-  const accuracy = totalNotes ? score/(totalNotes*1000)*100 : 0;
+  const accuracy = totalNotes
+    ? score / (totalNotes * 1000) * 100
+    : 0;
 
   let rank = 'F';
   let message = 'STAGE FAILED... TRY AGAIN!';
   let color = '#ff4444';
 
   if (accuracy >= 90) {
-    rank='S'; message='AMAZING! PERFECT RHYTHM!'; color='#ffd700';
+    rank = 'S';
+    message = 'AMAZING! PERFECT RHYTHM!';
+    color = '#ffd700';
   } else if (accuracy >= 80) {
-    rank='A'; message='GREAT JOB!'; color='#FD5DBD';
+    rank = 'A';
+    message = 'GREAT JOB!';
+    color = '#FD5DBD';
   } else if (accuracy >= 70) {
-    rank='B'; message='GOOD!'; color='#00fff2';
+    rank = 'B';
+    message = 'GOOD!';
+    color = '#00fff2';
   } else if (accuracy >= 60) {
-    rank='C'; message='CLEAR!'; color='#ff8800';
+    rank = 'C';
+    message = 'CLEAR!';
+    color = '#ff8800';
   }
 
   const result = document.getElementById('result-screen');
 
   result.innerHTML = `
-    <div style="font-size:65px;color:white;text-shadow:0 0 20px ${color};margin-bottom:10px">${rank}</div>
+    <div style="font-family:'Press Start 2P',cursive;font-size:65px;color:white;text-shadow:0 0 20px ${color};margin-bottom:10px">${rank}</div>
     <div style="font-size:9px;color:#fcd3f2;line-height:2;margin-bottom:20px">${message}</div>
     <div style="font-size:10px;line-height:2.5;text-align:left;margin-bottom:20px">
       <p style="color:#00fff2">PERFECT : ${perfectCount}</p>
@@ -601,20 +659,25 @@ function endGame() {
   `;
 
   result.classList.remove('hidden');
-  document.getElementById('retry-btn').onclick = () => startGame(activeSongKey);
-  document.getElementById('select-song-btn').onclick = goToSongSelect;
+
+  document.getElementById('retry-btn').onclick =
+    () => startGame(activeSongKey);
+
+  document.getElementById('select-song-btn').onclick =
+    goToSongSelect;
 }
 
-document.getElementById('start-game-btn').addEventListener('click',goToSongSelect);
+document.getElementById('start-game-btn')
+  .addEventListener('click', goToSongSelect);
 
 document.querySelectorAll('.song-select-btn').forEach(btn => {
-  btn.addEventListener('click',() => startGame(btn.dataset.song));
+  btn.addEventListener('click', () => startGame(btn.dataset.song));
 });
 
-/* 블루투스 키보드: D F J K */
-const keyMap = {d:0,f:1,j:2,k:3};
+/* 키보드 D F J K */
+const keyMap = { d: 0, f: 1, j: 2, k: 3 };
 
-document.addEventListener('keydown',e => {
+document.addEventListener('keydown', e => {
   const key = e.key.toLowerCase();
   if (!(key in keyMap)) return;
 
@@ -623,16 +686,16 @@ document.addEventListener('keydown',e => {
 });
 
 /* 터치 입력 */
-canvas.addEventListener('pointerdown',e => {
+canvas.addEventListener('pointerdown', e => {
   if (!isPlaying) return;
 
   e.preventDefault();
 
   const rect = canvas.getBoundingClientRect();
-  const x = (e.clientX-rect.left)*(width/rect.width);
-  const lane = Math.floor(x/laneWidth);
+  const x = (e.clientX - rect.left) * (width / rect.width);
+  const lane = Math.floor(x / laneWidth);
 
-  if (lane>=0 && lane<4) triggerInput(lane);
+  if (lane >= 0 && lane < 4) triggerInput(lane);
 });
 </script>
 </body>
