@@ -388,38 +388,17 @@ function startGame(songKey) {
   requestAnimationFrame(gameLoop);
 }
 
-function drawStar(x, y, outerRadius, innerRadius, rotation = 0) {
-  ctx.beginPath();
-
-  for (let i = 0; i < 10; i++) {
-    const angle = rotation - Math.PI / 2 + i * Math.PI / 5;
-    const radius = i % 2 === 0 ? outerRadius : innerRadius;
-    const px = x + Math.cos(angle) * radius;
-    const py = y + Math.sin(angle) * radius;
-
-    if (i === 0) ctx.moveTo(px, py);
-    else ctx.lineTo(px, py);
-  }
-
-  ctx.closePath();
-}
-
-/* 터치 성공 시 하트의 위치와 발광 효과를 저장 */
+/* 터치 성공 시 발광 효과의 위치를 저장 */
 function addEffect(lane, y) {
   effects.push({
     x: lane * laneWidth + laneWidth / 2,
     y: y,
     age: 0,
-    duration: 480,
-    stars: Array.from({ length: 5 }, () => ({
-      angle: Math.random() * Math.PI * 2,
-      distance: 20 + Math.random() * 30,
-      size: 6 + Math.random() * 7,
-      rotation: Math.random() * Math.PI
-    }))
+    duration: 480
   });
 }
 
+/* 하트 모양 */
 function drawHeart() {
   ctx.beginPath();
 
@@ -444,6 +423,7 @@ function drawHeart() {
   ctx.stroke();
 }
 
+/* 터치 순간의 링과 핑크빛 효과. 별 파티클은 사용하지 않음 */
 function drawEffects(delta) {
   for (let i = effects.length - 1; i >= 0; i--) {
     const e = effects[i];
@@ -457,7 +437,6 @@ function drawEffects(delta) {
     ctx.globalCompositeOperation = 'lighter';
     ctx.globalAlpha = alpha;
 
-    /* 바깥으로 퍼지는 네온 링 */
     ctx.strokeStyle = '#ff9cf4';
     ctx.lineWidth = Math.max(1, 4 * (1 - p));
     ctx.shadowColor = '#ff69e8';
@@ -467,7 +446,6 @@ function drawEffects(delta) {
     ctx.ellipse(e.x, e.y, radius, radius * 0.45, 0, 0, Math.PI * 2);
     ctx.stroke();
 
-    /* 하트 주변의 핑크빛 광원 */
     const glow = ctx.createRadialGradient(
       e.x, e.y, 0,
       e.x, e.y, 38 * (1 - p) + 3
@@ -482,19 +460,15 @@ function drawEffects(delta) {
     ctx.arc(e.x, e.y, 42 * (1 - p) + 3, 0, Math.PI * 2);
     ctx.fill();
 
-    /* 터치한 하트가 커졌다가 사라지는 효과 */
     const pulse = Math.sin(Math.PI * p);
     const heartScale = 1 + 0.42 * pulse;
-    const heartAlpha = alpha;
+    const baseScale = Math.min((laneWidth - 8) / 50, 0.84);
 
     ctx.save();
     ctx.translate(e.x, e.y);
-    ctx.scale(
-      Math.min((laneWidth - 8) / 50, 0.84) * heartScale,
-      Math.min((laneWidth - 8) / 50, 0.84) * heartScale
-    );
+    ctx.scale(baseScale * heartScale, baseScale * heartScale);
 
-    ctx.globalAlpha = heartAlpha;
+    ctx.globalAlpha = alpha;
     ctx.strokeStyle = '#ff1493';
     ctx.lineWidth = 8;
     ctx.lineCap = 'round';
@@ -505,18 +479,15 @@ function drawEffects(delta) {
     drawHeart();
     ctx.stroke();
 
-    /* 하트 중심의 밝은 핑크빛 */
     ctx.strokeStyle = '#fff0fb';
     ctx.lineWidth = 2;
     ctx.shadowColor = '#ffffff';
     ctx.shadowBlur = 12;
+
     drawHeart();
     ctx.stroke();
 
     ctx.restore();
-
-
-
     ctx.restore();
 
     if (e.age >= e.duration) {
@@ -588,38 +559,44 @@ function gameLoop(timestamp) {
 
   /* 노트 */
   for (const note of activeNotes) {
-   if (note.missed) continue;
-
-const timeDiff = note.time - currentTime;
-const noteY = judgeLineY - timeDiff * NOTE_SPEED;
-const x = note.lane * laneWidth + laneWidth / 2;
-
-/* 판정된 하트도 계속 아래로 이동 */
-if (note.hit) {
-  if (noteY > height + 100) continue;
-
-  ctx.save();
-  ctx.translate(x, noteY);
-
-  const s = Math.min((laneWidth - 8) / 50, 0.84);
-  ctx.scale(s, s);
-
-  ctx.strokeStyle = '#ff1493';
-  ctx.lineWidth = 7;
-  ctx.lineCap = 'round';
-  ctx.lineJoin = 'round';
-  ctx.shadowColor = '#ff008c';
-  ctx.shadowBlur = 35;
-
-  drawHeart();
-  ctx.stroke();
-  ctx.restore();
-
-  continue;
-}
+    if (note.missed) continue;
 
     const timeDiff = note.time - currentTime;
     const noteY = judgeLineY - timeDiff * NOTE_SPEED;
+    const x = note.lane * laneWidth + laneWidth / 2;
+
+    /* 판정된 하트도 아래로 계속 떨어지며 빛남 */
+    if (note.hit) {
+      if (noteY > height + 100) continue;
+
+      const s = Math.min((laneWidth - 8) / 50, 0.84);
+
+      ctx.save();
+      ctx.translate(x, noteY);
+      ctx.scale(s, s);
+
+      ctx.globalCompositeOperation = 'lighter';
+      ctx.strokeStyle = '#ff1493';
+      ctx.lineWidth = 8;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.shadowColor = '#ff008c';
+      ctx.shadowBlur = 35;
+
+      drawHeart();
+      ctx.stroke();
+
+      ctx.strokeStyle = '#fff0fb';
+      ctx.lineWidth = 2;
+      ctx.shadowColor = '#ffffff';
+      ctx.shadowBlur = 12;
+
+      drawHeart();
+      ctx.stroke();
+
+      ctx.restore();
+      continue;
+    }
 
     if (timeDiff < -GREAT_WINDOW) {
       note.missed = true;
@@ -629,9 +606,9 @@ if (note.hit) {
       continue;
     }
 
-    if (noteY > -40 && noteY < height + 40) {
-      const x = note.lane * laneWidth + laneWidth / 2;
-      const s = Math.min((laneWidth - 8) / 100, 0.42);
+    /* 일반 하트 */
+    if (noteY > -100 && noteY < height + 100) {
+      const s = Math.min((laneWidth - 8) / 50, 0.84);
 
       ctx.save();
       ctx.translate(x, noteY);
@@ -675,7 +652,6 @@ function triggerInput(lane) {
     }
   }
 
-  /* 판정 범위 안에 노트가 없음 */
   if (!target) return;
 
   const hitY = judgeLineY -
@@ -694,9 +670,7 @@ function triggerInput(lane) {
   combo++;
   maxCombo = Math.max(maxCombo, combo);
 
-  /* 성공한 하트의 발광 효과 */
   addEffect(lane, hitY);
-
   updateHUD();
 }
 
