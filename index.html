@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>82 Rhythm - Catherine Theme</title>
+  <title>iPad Rhythm - Catherine Landscape</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Shrikhand&family=Press+Start+2P&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Shrikhand&family=Caveat:wght@700&family=Noto+Sans+KR:wght@700;900&display=swap" rel="stylesheet">
 
   <style>
     * {
@@ -18,7 +18,7 @@
     }
 
     body {
-      background-color: #000000;
+      background-color: #050505;
       color: #ffffff;
       display: flex;
       justify-content: center;
@@ -26,44 +26,51 @@
       min-height: 100vh;
       min-height: 100dvh;
       overflow: hidden;
-      font-family: 'Press Start 2P', cursive;
+      font-family: 'Noto Sans KR', sans-serif;
     }
 
+    /* 아이패드 가로 비율 (4:3 ~ 16:9 대응 반응형 컨테이너) */
     #game-container {
       position: relative;
-      width: 100%;
-      max-width: 480px; /* 아이패드/태블릿 화면비에 맞추어 살짝 확장 */
+      width: 100vw;
       height: 100vh;
-      height: 100dvh;
+      max-width: 1180px;
+      max-height: 820px;
+      aspect-ratio: 4 / 3;
       background-color: #000000;
       display: flex;
       flex-direction: column;
       overflow: hidden;
-      border: 4px solid #ff007f; /* 캐서린 핫핑크 테두리 */
-      box-shadow: 0 0 25px rgba(255, 0, 127, 0.6), inset 0 0 15px rgba(255, 0, 127, 0.4);
+      border: 4px solid #ff007f;
+      box-shadow: 0 0 35px rgba(255, 0, 127, 0.7), inset 0 0 20px rgba(255, 0, 127, 0.3);
     }
 
+    /* 상단 HUD (가로 반응형) */
     #hud {
-      position: relative;
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
       height: 50px;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 0 20px;
-      background-color: #000000;
-      border-bottom: 3px solid #ff007f;
-      font-size: 0.75rem;
-      z-index: 10;
-      flex-shrink: 0;
+      padding: 0 30px;
+      background: linear-gradient(180deg, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.6) 100%);
+      border-bottom: 2px solid #ff007f;
+      font-size: 1.1rem;
+      font-weight: 900;
+      z-index: 20;
+      letter-spacing: 2px;
     }
 
-    #score { color: #ffffff; text-shadow: 0 0 8px #ff007f; }
-    #combo { color: #ff66b2; text-shadow: 0 0 8px #ff007f; }
+    #score { color: #ffffff; text-shadow: 0 0 10px #ff007f; }
+    #combo { color: #ffb3d9; text-shadow: 0 0 10px #ff007f; }
 
     #canvas-wrapper {
       position: relative;
       width: 100%;
-      height: calc(100% - 50px);
+      height: 100%;
       background-color: #000000;
       overflow: hidden;
     }
@@ -74,100 +81,224 @@
       height: 100%;
       display: block;
       touch-action: none;
-      background-color: #000000;
+      background-color: transparent;
       z-index: 2;
+    }
+
+    /* 캐서린 핫핑크 스크래치 & 브러시 오버레이 배경 */
+    .catherine-bg {
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: 
+        radial-gradient(circle at 80% 40%, #ff007f 0%, #b30059 40%, #1a000d 85%);
+      z-index: 1;
+      pointer-events: none;
+      overflow: hidden;
+    }
+
+    /* 스크래치/텍스처 무늬 연출 */
+    .catherine-bg::before {
+      content: "";
+      position: absolute;
+      top: -20%; left: -20%; width: 140%; height: 140%;
+      background: repeating-linear-gradient(
+        -45deg,
+        transparent,
+        transparent 15px,
+        rgba(0, 0, 0, 0.15) 15px,
+        rgba(0, 0, 0, 0.15) 30px
+      );
+      transform: rotate(5deg);
+    }
+
+    /* 오른쪽 우아한 여성 실루엣 아트 */
+    .silhouette-art {
+      position: absolute;
+      right: 2%;
+      bottom: -5%;
+      height: 105%;
+      width: 50%;
+      background: radial-gradient(ellipse at center, rgba(255, 0, 127, 0.4) 0%, transparent 70%);
+      z-index: 2;
+      pointer-events: none;
+    }
+
+    .silhouette-svg {
+      position: absolute;
+      right: 0;
+      bottom: 0;
+      height: 100%;
+      fill: #000000;
+      filter: drop-shadow(-5px 0px 15px rgba(255, 0, 127, 0.8));
     }
 
     .screen {
       position: absolute;
       top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0, 0, 0, 0.94); 
       display: flex;
       flex-direction: column;
       justify-content: center;
       align-items: center;
-      text-align: center;
-      padding: 20px;
       z-index: 999;
     }
 
     .hidden { display: none !important; }
 
-    h1 {
-      color: #ffffff;
-      font-family: 'Shrikhand', 'Press Start 2P', cursive;
-      font-size: 2.4rem;
-      margin-bottom: 15px;
-      line-height: 1.4;
-      text-shadow: 4px 4px 0px #ff007f, -2px -2px 0px #000;
-      letter-spacing: 2px;
+    /* 좌측 상단 캘리그라피 타이틀 */
+    .catherine-title {
+      position: absolute;
+      top: 40px;
+      left: 50px;
+      text-align: left;
     }
 
-    .start-btn {
+    .catherine-title h1 {
+      font-family: 'Shrikhand', cursive;
+      font-size: 3.5rem;
+      color: #ffffff;
+      text-shadow: 4px 4px 0px #000, 6px 6px 12px #ff007f;
+      line-height: 1;
+      transform: rotate(-3deg);
+    }
+
+    .catherine-title span {
+      font-family: 'Caveat', cursive;
+      font-size: 1.5rem;
+      color: #ffc2e0;
+      display: block;
+      margin-top: 5px;
+      text-shadow: 2px 2px 4px #000;
+    }
+
+    /* 검은색 섹시한 하트 노랫선택 메뉴 프레임 */
+    .heart-menu-container {
+      position: absolute;
+      left: 8%;
+      top: 48%;
+      transform: translateY(-50%);
+      width: 460px;
+      height: 420px;
+      background: #000000;
+      /* 섹시한 곡선의 하트모양 클리핑 마스크 */
+      clip-path: path("M 230,390 C 130,300 0,220 0,130 C 0,55 60,0 135,0 C 180,0 215,25 230,60 C 245,25 280,0 325,0 C 400,0 460,55 460,130 C 460,220 330,300 230,390 Z");
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 40px 30px;
+      box-shadow: 0 0 30px rgba(0,0,0,0.9);
+      border: 3px solid #ff007f;
+    }
+
+    /* 하트 메뉴 내부 곡 리스트 */
+    .song-list {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      align-items: center;
+      z-index: 10;
+    }
+
+    /* 곡 선택 버튼 & 호버/터치 발광 효과 */
+    .song-select-btn {
+      position: relative;
+      width: 85%;
+      padding: 14px 20px;
+      background: transparent;
+      color: #ffffff;
+      border: none;
+      font-family: 'Noto Sans KR', sans-serif;
+      font-weight: 900;
+      font-size: 1.15rem;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.2s ease;
+      letter-spacing: 1px;
+      overflow: hidden;
+    }
+
+    /* 버튼 밑줄 스타일 */
+    .song-select-btn::after {
+      content: "";
+      position: absolute;
+      bottom: 0; left: 10%; width: 80%;
+      height: 2px;
+      background: rgba(255, 255, 255, 0.3);
+      transition: all 0.2s ease;
+    }
+
+    /* 커서 가져다 대거나 활성화 시 브러시 백글로우 발광 연출 */
+    .song-select-btn:hover, .song-select-btn:active {
+      color: #ffffff;
+      transform: scale(1.08);
+      text-shadow: 0 0 8px #ffffff, 0 0 15px #ff007f;
+    }
+
+    .song-select-btn:hover::before, .song-select-btn:active::before {
+      content: "";
+      position: absolute;
+      top: 50%; left: 50%;
+      width: 120%; height: 80%;
+      background: radial-gradient(ellipse at center, rgba(255,0,127,0.95) 0%, rgba(255,102,178,0.6) 50%, transparent 80%);
+      transform: translate(-50%, -50%);
+      z-index: -1;
+      filter: blur(4px);
+    }
+
+    .song-select-btn:hover::after {
+      background: #ffffff;
+      box-shadow: 0 0 10px #ffffff;
+      width: 100%;
+      left: 0;
+    }
+
+    /* 일반 버튼 스타일 */
+    .catherine-btn {
       background-color: #ff007f;
       color: #ffffff;
       border: 3px solid #ffffff;
-      padding: 14px 24px;
-      font-size: 0.9rem;
+      padding: 14px 32px;
+      font-size: 1.1rem;
+      font-weight: 900;
       cursor: pointer;
-      font-family: 'Press Start 2P', cursive;
-      margin: 10px 0;
-      box-shadow: 4px 4px 0px #ffffff;
-      transition: 0.1s;
+      box-shadow: 5px 5px 0px #000;
+      transition: 0.15s;
+      letter-spacing: 1px;
     }
 
-    .start-btn:hover, .start-btn:active {
+    .catherine-btn:hover, .catherine-btn:active {
       background-color: #ffffff;
       color: #ff007f;
+      box-shadow: 7px 7px 0px #ff007f;
       transform: translate(-2px, -2px);
-      box-shadow: 6px 6px 0px #ff007f;
-    }
-     
-    h2 {
-      color: #ffb3d9;
-      font-size: 0.75rem;
-      margin-bottom: 25px;
-      letter-spacing: 2px;
     }
 
-    .song-select-btn {
-      background-color: rgba(255, 0, 127, 0.15);
-      color: #ffffff;
-      border: 2px solid #ff007f;
-      font-family: 'Press Start 2P', sans-serif;
-      font-size: 0.95rem;
-      cursor: pointer;
-      margin-bottom: 15px;
-      padding: 12px 18px;
-      width: 85%;
-      max-width: 300px;
-      word-break: keep-all;
-      box-shadow: 3px 3px 0px #ff007f;
-      transition: all 0.1s;
-    }
-
-    .song-select-btn:hover, .song-select-btn:active {
-      background-color: #ff007f;
-      color: #ffffff;
-      transform: scale(1.03);
-      box-shadow: 5px 5px 0px #ffffff;
-    }
-
-    /* 캐서린 무드 배경 비네팅 오버레이 */
-    .catherine-bg-fx {
-      position: absolute;
-      top: 0; left: 0; width: 100%; height: 100%;
-      pointer-events: none;
-      background: radial-gradient(circle, rgba(255,0,127,0.15) 0%, rgba(0,0,0,0.85) 85%);
-      z-index: 1;
+    /* 결과 창 스타일 */
+    .result-box {
+      background: rgba(0, 0, 0, 0.95);
+      border: 4px solid #ff007f;
+      padding: 40px 60px;
+      text-align: center;
+      box-shadow: 0 0 40px rgba(255, 0, 127, 0.8);
+      position: relative;
+      z-index: 1000;
     }
   </style>
 </head>
 <body>
 
 <div id="game-container">
-  <div class="catherine-bg-fx"></div>
-  <div id="hud">
+  <!-- 배경 스크래치 아트워크 & 실루엣 -->
+  <div class="catherine-bg"></div>
+  <div class="silhouette-art">
+    <svg class="silhouette-svg" viewBox="0 0 400 600">
+      <path d="M250,600 C240,500 210,420 180,350 C160,300 130,250 140,180 C150,110 200,80 230,40 C210,30 180,20 150,40 C110,60 90,120 100,180 C110,240 130,280 120,340 C110,400 70,480 50,600 Z"/>
+      <circle cx="210" cy="110" r="12" fill="#ff007f"/>
+    </svg>
+  </div>
+
+  <div id="hud" class="hidden">
     <div>SCORE: <span id="score">000000</span></div>
     <div><span id="combo">0</span> COMBO</div>
   </div>
@@ -177,18 +308,32 @@
 
     <!-- 1단계: 시작 화면 -->
     <div id="start-screen" class="screen">
-      <h1>82 RHYTHM</h1>
-      <h2>♥ CATHERINE EDITION ♥</h2>
-      <button id="start-game-btn" class="start-btn">START GAME</button>
+      <div class="catherine-title">
+        <h1>CATHERINE</h1>
+        <span>82 Rhythm iPad Edition</span>
+      </div>
+
+      <div class="heart-menu-container">
+        <div style="font-family: 'Shrikhand'; font-size: 1.8rem; color: #ff007f; margin-bottom: 25px; text-shadow: 0 0 10px #ff007f;">
+          82 RHYTHM
+        </div>
+        <button id="start-game-btn" class="catherine-btn">START GAME</button>
+      </div>
     </div>
 
-    <!-- 2단계: 곡 선택 화면 -->
+    <!-- 2단계: 섹시한 하트 노래 선택 화면 (첨부 이미지 완전 재현) -->
     <div id="song-select-screen" class="screen hidden">
-      <h1>SELECT SONG</h1>
-      <h2>CHOOSE YOUR DESIRE</h2>
-      
-      <button class="song-select-btn" data-song="gossip">> GOSSIP</button>
-      <button class="song-select-btn" data-song="trembling">> 떨리는 맘</button>
+      <div class="catherine-title">
+        <h1>VOICE & TRACK</h1>
+        <span>Choose your ideal rhythm...</span>
+      </div>
+
+      <div class="heart-menu-container">
+        <div class="song-list">
+          <button class="song-select-btn" data-song="gossip">♥ GOSSIP</button>
+          <button class="song-select-btn" data-song="trembling">♥ 떨리는 맘</button>
+        </div>
+      </div>
     </div>
 
     <!-- 3단계: 랭크/결과 화면 -->
@@ -203,11 +348,14 @@ const wrapper = document.getElementById('canvas-wrapper');
 
 let width, height, laneWidth, judgeLineY;
 
+// 가로 모드 레인 배치 계산
 function resize() {
   width = canvas.width = wrapper.clientWidth;
   height = canvas.height = wrapper.clientHeight;
-  laneWidth = width / 4;
-  judgeLineY = height - 110;
+  
+  // 가로 모드 중앙에 4개의 레인을 집중 배치
+  laneWidth = Math.min(width * 0.12, 110); 
+  judgeLineY = height - 90;
 }
 window.addEventListener('resize', resize);
 resize();
@@ -232,7 +380,7 @@ const songs = {
 
 let activeSongKey = 'gossip';
 let currentBgm = new Audio();
-const NOTE_SPEED = 550;
+const NOTE_SPEED = 600;
 
 function generatePattern(duration, bpm, offset, seed) {
   const pattern = [];
@@ -247,23 +395,14 @@ function generatePattern(duration, bpm, offset, seed) {
   }
 
   function pickLane(exclude = []) {
-    const choices = [0, 1, 2, 3].filter(
-      lane => !exclude.includes(lane)
-    );
+    const choices = [0, 1, 2, 3].filter(lane => !exclude.includes(lane));
     return choices[Math.floor(rand() * choices.length)];
   }
 
   let beatIndex = 0;
 
-  for (
-    let time = offset;
-    time < duration - 0.2;
-    time += beat, beatIndex++
-  ) {
-    const variation = rand();
-    if (variation < 0.10 && beatIndex % 4 !== 0) {
-      continue;
-    }
+  for (let time = offset; time < duration - 0.2; time += beat, beatIndex++) {
+    if (rand() < 0.10 && beatIndex % 4 !== 0) continue;
 
     const lane = pickLane([previousLane]);
     pattern.push({ t: time, l: lane });
@@ -278,10 +417,7 @@ function generatePattern(duration, bpm, offset, seed) {
       }
     }
 
-    if (
-      rand() < 0.13 &&
-      beatIndex !== previousDouble
-    ) {
+    if (rand() < 0.13 && beatIndex !== previousDouble) {
       const secondLane = pickLane([lane]);
       pattern.push({ t: time, l: secondLane });
       previousDouble = beatIndex;
@@ -305,12 +441,12 @@ let perfectCount = 0;
 let greatCount = 0;
 let missCount = 0;
 let activeNotes = [];
-let effects = [];
 
 function goToSongSelect() {
   document.getElementById('start-screen').classList.add('hidden');
   document.getElementById('song-select-screen').classList.remove('hidden');
   document.getElementById('result-screen').classList.add('hidden');
+  document.getElementById('hud').classList.add('hidden');
 }
 
 function startGame(songKey) {
@@ -324,7 +460,6 @@ function startGame(songKey) {
   perfectCount = 0;
   greatCount = 0;
   missCount = 0;
-  effects = [];
   
   isBgLoaded = false;
   bgImage.src = selectedSong.bg;
@@ -335,6 +470,7 @@ function startGame(songKey) {
   document.getElementById('start-screen').classList.add('hidden');
   document.getElementById('song-select-screen').classList.add('hidden');
   document.getElementById('result-screen').classList.add('hidden');
+  document.getElementById('hud').classList.remove('hidden');
 
   document.getElementById('score').innerText = '000000';
   document.getElementById('combo').innerText = '0';
@@ -344,9 +480,7 @@ function startGame(songKey) {
   
   const playPromise = currentBgm.play();
   if (playPromise !== undefined) {
-    playPromise.catch(error => {
-      console.log("Audio play blocked or loading error:", error);
-    });
+    playPromise.catch(error => console.log("Audio play blocked:", error));
   }
   
   currentBgm.onended = () => { endGame(); };
@@ -361,15 +495,7 @@ function updateHUD() {
   document.getElementById('combo').innerText = combo;
 }
 
-function addEffect(lane, text) {
-  effects.push({
-    x: lane * laneWidth + laneWidth / 2,
-    y: judgeLineY - 20,
-    text: text,
-    alpha: 1.0
-  });
-}
-
+// 메인 게임 루프 (이펙트 문구 표시 완전 제거)
 function gameLoop(timestamp) {
   if (!isPlaying) return;
 
@@ -382,96 +508,61 @@ function gameLoop(timestamp) {
 
   ctx.clearRect(0, 0, width, height);
 
-  if (isBgLoaded) {
-    ctx.drawImage(bgImage, 0, 0, width, height);
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
-    ctx.fillRect(0, 0, width, height);
-  } else {
-    ctx.fillStyle = '#000000';
-    ctx.fillRect(0, 0, width, height);
-  }
+  const startX = (width - laneWidth * 4) / 2;
 
-  // 캐서린 네온 핑크 레인 라인
-  ctx.strokeStyle = 'rgba(255, 0, 127, 0.35)';
+  // 가로 중앙 리듬게임 트랙 배경
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.75)';
+  ctx.fillRect(startX, 0, laneWidth * 4, height);
+
+  // 레인 구분선
+  ctx.strokeStyle = 'rgba(255, 0, 127, 0.4)';
   ctx.lineWidth = 2;
-  for (let i = 1; i < 4; i++) {
+  for (let i = 0; i <= 4; i++) {
     ctx.beginPath();
-    ctx.moveTo(i * laneWidth, 0);
-    ctx.lineTo(i * laneWidth, height);
+    ctx.moveTo(startX + i * laneWidth, 0);
+    ctx.lineTo(startX + i * laneWidth, height);
     ctx.stroke();
   }
 
-  // 강렬한 핫핑크 판정선
+  // 판정선 (핫핑크 글로우)
   ctx.strokeStyle = '#ff007f';
-  ctx.lineWidth = 5;
+  ctx.lineWidth = 4;
   ctx.shadowColor = '#ff007f';
-  ctx.shadowBlur = 12;
+  ctx.shadowBlur = 10;
   ctx.beginPath();
-  ctx.moveTo(0, judgeLineY);
-  ctx.lineTo(width, judgeLineY);
+  ctx.moveTo(startX, judgeLineY);
+  ctx.lineTo(startX + laneWidth * 4, judgeLineY);
   ctx.stroke();
   ctx.shadowBlur = 0;
 
+  // 노트 렌더링
   activeNotes.forEach(note => {
     if (note.hit) return;
 
     const timeDiff = note.time - currentTime;
     const noteY = judgeLineY - (timeDiff * NOTE_SPEED);
-    const noteHeight = 20;
+    const noteHeight = 18;
 
     if (timeDiff < -0.18 && !note.missed) {
       note.missed = true;
       combo = 0;
       missCount++;
-      addEffect(note.lane, 'MISS');
       updateHUD();
     }
 
     if (noteY > -20 && noteY < height + 20 && !note.missed) {
-      const x = note.lane * laneWidth + 6;
+      const x = startX + note.lane * laneWidth + 6;
       const w = laneWidth - 12;
       const mainColor = (note.lane === 0 || note.lane === 3) ? '#ffffff' : '#ff007f';
-      const glowColor = (note.lane === 0 || note.lane === 3) ? '#ffb3d9' : '#ffffff';
 
       ctx.save();
-      ctx.shadowColor = glowColor;
-      ctx.shadowBlur = 12;
-
       ctx.fillStyle = mainColor;
+      ctx.shadowColor = mainColor;
+      ctx.shadowBlur = 10;
       ctx.fillRect(x, noteY - noteHeight / 2, w, noteHeight);
-
-      // 노트 내부 포인트 디자인
-      ctx.fillStyle = '#000000';
-      ctx.fillRect(x + 4, noteY - 3, w - 8, 6);
-
       ctx.restore();
     }
   });
-
-  for (let i = effects.length - 1; i >= 0; i--) {
-    const eff = effects[i];
-    ctx.save();
-    ctx.font = '11px "Press Start 2P"';
-    ctx.textAlign = 'center';
-    
-    if (eff.text === 'MISS') {
-      ctx.fillStyle = `rgba(255, 60, 60, ${eff.alpha})`;
-      ctx.shadowColor = '#ff0000';
-    } else if (eff.text === 'PERFECT') {
-      ctx.fillStyle = `rgba(255, 255, 255, ${eff.alpha})`;
-      ctx.shadowColor = '#ff007f';
-      ctx.shadowBlur = 8;
-    } else {
-      ctx.fillStyle = `rgba(255, 180, 220, ${eff.alpha})`;
-    }
-
-    ctx.fillText(eff.text, eff.x, eff.y);
-    ctx.restore();
-
-    eff.y -= 1;
-    eff.alpha -= 0.04;
-    if (eff.alpha <= 0) effects.splice(i, 1);
-  }
 
   requestAnimationFrame(gameLoop);
 }
@@ -499,7 +590,6 @@ function triggerInput(lane) {
         score += 500;
       }
       
-      addEffect(lane, isPerfect ? 'PERFECT' : 'GREAT');
       updateHUD();
     }
   }
@@ -515,35 +605,27 @@ function endGame() {
   const accuracy = maxPossibleScore > 0 ? (score / maxPossibleScore) * 100 : 0;
 
   let rank = 'F';
-  let message = '"STAGE FAILED... TRY AGAIN!"';
-  if (accuracy >= 90) { rank = 'S'; message = '"AMAZING! PERFECT DESIRE!"'; }
-  else if (accuracy >= 80) { rank = 'A'; message = '"GREAT JOB!"'; }
-  else if (accuracy >= 70) { rank = 'B'; message = '"GOOD!"'; }
-  else if (accuracy >= 60) { rank = 'C'; message = '"CLEAR!"'; }
+  if (accuracy >= 90) rank = 'S';
+  else if (accuracy >= 80) rank = 'A';
+  else if (accuracy >= 70) rank = 'B';
+  else if (accuracy >= 60) rank = 'C';
 
-  let rankColor = '#ffffff'; 
-  let shadowColor = '#ff007f';
-
-  if (rank === 'S') { rankColor = '#ffffff'; shadowColor = '#ff007f'; } 
-  else if (rank === 'A') { rankColor = '#ffffff'; shadowColor = '#ff66b2'; } 
-  else if (rank === 'B') { rankColor = '#ffffff'; shadowColor = '#00fff2'; } 
-  else if (rank === 'C') { rankColor = '#ffffff'; shadowColor = '#ff8800'; } 
+  document.getElementById('hud').classList.add('hidden');
 
   const resultScreen = document.getElementById('result-screen');
   resultScreen.innerHTML = `
-    <div style="font-size: 4.5rem; font-family: 'Shrikhand'; color: ${rankColor}; text-shadow: 0 0 15px ${shadowColor}; margin-bottom: 5px;">${rank}</div>
-    <div style="font-size: 0.65rem; color: #ffb3d9; margin-bottom: 20px;">${message}</div>
-    
-    <div style="font-size: 0.65rem; line-height: 2.2; margin-bottom: 25px; text-align: left; background: rgba(255,0,127,0.1); padding: 12px 20px; border: 2px solid #ff007f;">
-      <p style="color:#ffffff;">PERFECT : ${perfectCount}</p>
-      <p style="color:#ffb3d9;">GREAT   : ${greatCount}</p>
-      <p style="color:#ff4444;">MISS    : ${missCount}</p>
-      <hr style="border: 0; border-top: 1px dashed #ff007f; margin: 5px 0;">
-      <p style="color:#ff007f;">MAX COMBO : ${maxCombo}</p>
-    </div>
-    <div>
-      <button id="retry-btn" class="start-btn">RETRY</button><br>
-      <button id="select-song-btn" class="start-btn">SELECT SONG</button>
+    <div class="result-box">
+      <div style="font-size: 5rem; font-family: 'Shrikhand'; color: #ffffff; text-shadow: 4px 4px 0px #ff007f; margin-bottom: 10px;">${rank}</div>
+      
+      <div style="font-size: 1.0rem; line-height: 2.2; margin-bottom: 30px; text-align: left; border-top: 2px solid #ff007f; border-bottom: 2px solid #ff007f; padding: 15px 0;">
+        <p style="color:#ffffff;">PERFECT : ${perfectCount}</p>
+        <p style="color:#ffb3d9;">GREAT   : ${greatCount}</p>
+        <p style="color:#ff4444;">MISS    : ${missCount}</p>
+        <p style="color:#ff007f; font-weight: bold; margin-top: 5px;">MAX COMBO : ${maxCombo}</p>
+      </div>
+      
+      <button id="retry-btn" class="catherine-btn" style="margin-right: 15px;">RETRY</button>
+      <button id="select-song-btn" class="catherine-btn">SELECT SONG</button>
     </div>
   `;
   resultScreen.classList.remove('hidden');
@@ -555,7 +637,7 @@ function endGame() {
   document.getElementById('select-song-btn').addEventListener('touchend', (e) => { e.preventDefault(); goToSongSelect(); });
 }
 
-// 모바일 터치 및 클릭 이벤트 안전 바인딩
+// 터치 및 이벤트 매핑
 document.getElementById('start-game-btn').addEventListener('click', goToSongSelect);
 document.getElementById('start-game-btn').addEventListener('touchend', (e) => {
   e.preventDefault();
@@ -571,10 +653,7 @@ document.querySelectorAll('.song-select-btn').forEach(btn => {
   });
 });
 
-const keyMap = {
-  d: 0, f: 1, j: 2, k: 3
-};
-
+const keyMap = { d: 0, f: 1, j: 2, k: 3 };
 document.addEventListener('keydown', (e) => {
   const key = e.key.toLowerCase();
   if (!(key in keyMap)) return;
@@ -583,23 +662,32 @@ document.addEventListener('keydown', (e) => {
   triggerInput(keyMap[key]);
 });
 
-// 아이패드 멀티터치 완벽 대응 (여러 손가락으로 동시에 레인을 누를 때 처리)
+// 아이패드 가로 터치 영토 계산
 canvas.addEventListener('touchstart', (e) => {
   if (!isPlaying) return;
   e.preventDefault();
   const rect = canvas.getBoundingClientRect();
+  const startX = (width - laneWidth * 4) / 2;
+
   for (let i = 0; i < e.touches.length; i++) {
-    const touchX = e.touches[i].clientX;
-    const lane = Math.floor((touchX - rect.left) / laneWidth);
-    if (lane >= 0 && lane < 4) triggerInput(lane);
+    const touchX = e.touches[i].clientX - rect.left;
+    if (touchX >= startX && touchX <= startX + laneWidth * 4) {
+      const lane = Math.floor((touchX - startX) / laneWidth);
+      if (lane >= 0 && lane < 4) triggerInput(lane);
+    }
   }
 }, { passive: false });
 
 canvas.addEventListener('mousedown', (e) => {
   if (!isPlaying) return;
   const rect = canvas.getBoundingClientRect();
-  const lane = Math.floor((e.clientX - rect.left) / laneWidth);
-  if (lane >= 0 && lane < 4) triggerInput(lane);
+  const startX = (width - laneWidth * 4) / 2;
+  const touchX = e.clientX - rect.left;
+
+  if (touchX >= startX && touchX <= startX + laneWidth * 4) {
+    const lane = Math.floor((touchX - startX) / laneWidth);
+    if (lane >= 0 && lane < 4) triggerInput(lane);
+  }
 });
 </script>
 
