@@ -1,6 +1,6 @@
 
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="ja">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -90,25 +90,31 @@ canvas {
   display: none !important;
 }
 
-/* 공통 제목 */
+/* 제목 공통 */
 h1 {
   color: #fcd3f2;
   line-height: 1.5;
   margin-bottom: 16px;
   text-shadow: 3px 3px #e664b7;
-  -webkit-text-stroke: 1px #000;
+  -webkit-text-stroke: 0.5px #000;
 }
 
-/* 일본어 도트 폰트 */
+/* 일본어 제목: 도트 폰트 */
 .jp-title {
   font-family: 'DotGothic16', sans-serif;
-  font-size: 36px;
+  font-size: 40px;
   font-weight: 400;
-  white-space: nowrap;
+  line-height: 1.5;
   letter-spacing: 0;
+  white-space: nowrap;
+  -webkit-text-stroke: 0;
+  text-shadow:
+    2px 2px 0 #e664b7,
+    4px 4px 0 #8d347d,
+    0 0 12px #ff69c7;
 }
 
-/* 영어 픽셀 폰트 */
+/* 영어 제목 */
 .en-title {
   font-family: 'Press Start 2P', cursive;
   font-size: 25px;
@@ -123,15 +129,19 @@ h2 {
   margin-bottom: 25px;
 }
 
+/* 버튼 공통 */
 .start-btn,
 .song-select-btn {
   background: transparent;
   color: white;
   border: none;
-  font-family: 'Press Start 2P', cursive;
   cursor: pointer;
   padding: 12px;
   margin: 5px;
+}
+
+.start-btn {
+  font-family: 'Press Start 2P', cursive;
   font-size: 11px;
 }
 
@@ -140,20 +150,21 @@ h2 {
   color: #FF69C7;
 }
 
-.song-select-btn {
-  font-size: 11px;
-}
-
-/* 일본어 곡명 */
+/* 일본어 곡 선택 버튼 */
 .song-jp {
   font-family: 'DotGothic16', sans-serif;
-  font-size: 20px;
+  font-size: 23px;
+  font-weight: 400;
+  letter-spacing: 0;
+  line-height: 1.6;
+  white-space: nowrap;
+  text-shadow: 1px 1px 0 #e664b7;
 }
 
-/* 작은 화면에서도 제목이 잘리지 않도록 */
+/* 작은 화면 대응 */
 @media (max-width: 360px) {
   .jp-title {
-    font-size: 30px;
+    font-size: 33px;
   }
 
   .en-title {
@@ -165,7 +176,8 @@ h2 {
   }
 
   .song-jp {
-    font-size: 18px;
+    font-size: 19px;
+    padding: 10px 4px;
   }
 }
 </style>
@@ -366,7 +378,6 @@ function startGame(songKey) {
   requestAnimationFrame(gameLoop);
 }
 
-/* 오각별 */
 function drawStar(x, y, outerRadius, innerRadius, rotation = 0) {
   ctx.beginPath();
 
@@ -383,7 +394,6 @@ function drawStar(x, y, outerRadius, innerRadius, rotation = 0) {
   ctx.closePath();
 }
 
-/* 성공 입력 이펙트 */
 function addEffect(lane) {
   effects.push({
     x: lane * laneWidth + laneWidth / 2,
@@ -484,7 +494,6 @@ function gameLoop(timestamp) {
     ctx.fillRect(0, 0, width, height);
   }
 
-  /* 레인 구분선 */
   ctx.strokeStyle = 'rgba(120,210,255,0.13)';
   ctx.lineWidth = 1;
 
@@ -495,7 +504,6 @@ function gameLoop(timestamp) {
     ctx.stroke();
   }
 
-  /* 판정선 */
   ctx.save();
   ctx.shadowColor = '#ff69c7';
   ctx.shadowBlur = 13;
@@ -517,7 +525,6 @@ function gameLoop(timestamp) {
   ctx.stroke();
   ctx.restore();
 
-  /* 하트 십자 네온 노트 */
   for (const note of activeNotes) {
     if (note.hit || note.missed) continue;
 
@@ -549,7 +556,6 @@ function gameLoop(timestamp) {
       ctx.shadowBlur = 18;
 
       ctx.beginPath();
-
       ctx.moveTo(0, -28);
       ctx.lineTo(0, -8);
 
@@ -561,10 +567,8 @@ function gameLoop(timestamp) {
 
       ctx.moveTo(0, 24);
       ctx.lineTo(0, 43);
-
       ctx.moveTo(-47, 3);
       ctx.lineTo(-25, 3);
-
       ctx.moveTo(25, 3);
       ctx.lineTo(47, 3);
 
@@ -674,7 +678,6 @@ document.querySelectorAll('.song-select-btn').forEach(btn => {
   btn.addEventListener('click', () => startGame(btn.dataset.song));
 });
 
-/* 키보드 D F J K */
 const keyMap = { d: 0, f: 1, j: 2, k: 3 };
 
 document.addEventListener('keydown', e => {
@@ -685,7 +688,6 @@ document.addEventListener('keydown', e => {
   triggerInput(keyMap[key]);
 });
 
-/* 터치 입력 */
 canvas.addEventListener('pointerdown', e => {
   if (!isPlaying) return;
 
