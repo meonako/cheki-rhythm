@@ -557,17 +557,33 @@ function gameLoop(timestamp) {
       const x = note.lane * laneWidth + laneWidth / 2;
 
       ctx.save();
-      ctx.translate(x, noteY);
+ctx.translate(x, noteY);
 
-      const s = Math.min((laneWidth - 18) / 100, 0.348);
-      ctx.scale(s, s);
+// 판정 성공 시 하트가 커졌다가 원래 크기로 돌아감
+const hitEffect = effects.find(e => e.note === note);
+let hitScale = 1;
+let hitGlow = 0;
 
-      ctx.strokeStyle = '#ffc4f2';
-      ctx.lineWidth = 7;
-      ctx.lineCap = 'round';
-      ctx.lineJoin = 'round';
-      ctx.shadowColor = '#ff69c7';
-      ctx.shadowBlur = 18;
+if (hitEffect) {
+  const p = Math.min(hitEffect.age / 480, 1);
+
+  // 처음에는 크게 튀어나오고 부드럽게 원래 크기로 복귀
+  hitScale = 1 + 0.35 * Math.sin(Math.PI * p) * (1 - p * 0.35);
+
+  // 진한 핑크 발광이 점점 사라짐
+  hitGlow = 1 - p;
+}
+
+const s = Math.min((laneWidth - 8) / 100, 0.42);
+ctx.scale(s * hitScale, s * hitScale);
+
+      ctx.strokeStyle = hitEffect ? '#ff1493' : '#ffc4f2';
+ctx.lineWidth = 7;
+ctx.lineCap = 'round';
+ctx.lineJoin = 'round';
+
+ctx.shadowColor = hitEffect ? '#ff008c' : '#ff69c7';
+ctx.shadowBlur = hitEffect ? 18 + hitGlow * 42 : 18;
 
       ctx.beginPath();
       ctx.moveTo(0, -28);
@@ -596,33 +612,26 @@ function gameLoop(timestamp) {
 }
 
 function triggerInput(lane) {
-  if (!isPlaying) return;
-
-  const currentTime = currentBgm.currentTime;
-
-  const target = activeNotes.find(n =>
-    n.lane === lane && !n.hit && !n.missed
-  );
-
-  if (!target) return;
-
-  const diff = Math.abs(target.time - currentTime);
-
-  if (diff <= 0.15) {
-    target.hit = true;
-
-    combo++;
-    maxCombo = Math.max(maxCombo, combo);
-
-    if (diff <= 0.07) {
-      perfectCount++;
-      score += 1000;
-    } else {
+  function addEffect(lane, note) {
+  effects.push({
+    x: lane * laneWidth + laneWidth / 2,
+    y: judgeLineY,
+    age: 0,
+    duration: 480,
+    note: note,
+    stars: Array.from({ length: 5 }, () => ({
+      angle: Math.random() * Math.PI * 2,
+      distance: 20 + Math.random() * 30,
+      size: 6 + Math.random() * 7,
+      rotation: Math.random() * Math.PI
+    }))
+  });
+} else {
       greatCount++;
       score += 500;
     }
 
-    addEffect(lane);
+    addEffect(lane, target);
     updateHUD();
   }
 }
