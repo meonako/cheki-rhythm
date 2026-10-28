@@ -263,6 +263,18 @@ resize();
 const bgImage = new Image();
 let isBgLoaded = false;
 
+// 게임 시작 전에 커버 이미지 미리 로딩
+bgImage.src = './Cover2.png';
+
+bgImage.onload = () => {
+  isBgLoaded = true;
+};
+
+bgImage.onerror = () => {
+  isBgLoaded = false;
+  console.error('커버 이미지 로딩 실패:', bgImage.src);
+};
+  
 function generatePattern(duration, bpm, offset, seed) {
   const pattern = [];
   const beat = 60 / bpm;
@@ -387,10 +399,6 @@ function startGame(songKey) {
 
   updateHUD();
 
-  bgImage.onload = () => { isBgLoaded = true; };
-  bgImage.onerror = () => { isBgLoaded = false; };
-  isBgLoaded = false;
-  bgImage.src = song.bg;
 
   currentBgm = new Audio(song.src);
   currentBgm.onended = endGame;
