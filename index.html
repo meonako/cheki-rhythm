@@ -37,8 +37,6 @@ body {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  border: 2px solid #FF69C7;
-  box-shadow: 0 0 20px #ff69c744;
   background: #000;
 }
 
@@ -49,12 +47,11 @@ body {
   align-items: center;
   justify-content: space-between;
   padding: 0 12px;
-  border-bottom: 2px solid #FDC7FB;
   font-size: 9px;
   z-index: 10;
 }
 
-#score { color: #ffd700; }
+#score { color: #ffffff; }
 #combo { color: #fcd3f2; }
 
 #canvas-wrapper {
@@ -89,14 +86,13 @@ canvas {
   display: none !important;
 }
 
+/* 공통 타이틀 */
 h1 {
-  color: #fcd3f2;
   line-height: 1.5;
   margin-bottom: 16px;
-  text-shadow: 3px 3px #e664b7;
-  -webkit-text-stroke: 0.5px #000;
 }
 
+/* 시작 화면 제목 */
 .jp-title {
   font-family: 'DotGothic16', sans-serif;
   font-size: 40px;
@@ -104,11 +100,17 @@ h1 {
   line-height: 1.5;
   letter-spacing: 0;
   white-space: nowrap;
-  -webkit-text-stroke: 0;
-  text-shadow:
-    2px 2px 0 #e664b7,
-    4px 4px 0 #8d347d,
-    0 0 12px #ff69c7;
+
+  color: #fff0fb;
+  -webkit-text-fill-color: #fff0fb;
+  -webkit-text-stroke: 2.0px #fff0fb;
+
+text-shadow:
+  0 0 4px rgba(255, 240, 251, 0.6),
+  0 0 10px rgba(255, 181, 232, 0.5),
+  0 0 22px rgba(255, 105, 199, 0.4),
+  0 0 38px rgba(255, 79, 200, 0.4),
+  0 0 55px rgba(255, 79, 200, 0.2);
 }
 
 .en-title {
@@ -125,19 +127,30 @@ h2 {
   margin-bottom: 25px;
 }
 
+/* 곡 선택 제목 */
 .track-title {
   font-family: 'Press Start 2P', cursive;
   font-size: 20px;
+  font-weight: 400;
   line-height: 2;
-  color: #ffffff;
   white-space: nowrap;
   margin-bottom: 25px;
+
+  color: #fff0fb;
+  -webkit-text-fill-color: #fff0fb;
+  -webkit-text-stroke: 0.5px #ffd0f1;
+
+  text-shadow:
+    0 0 3px #ffb5e8,
+    0 0 8px #ff69c7,
+    0 0 16px #ff4fc8;
 }
 
+/* 버튼 기본 스타일 */
 .start-btn,
 .song-select-btn {
   background: transparent;
-  color: white;
+  color: #fff;
   border: none;
   cursor: pointer;
   padding: 12px;
@@ -149,21 +162,25 @@ h2 {
   font-size: 11px;
 }
 
-.start-btn:active,
-.song-select-btn:active {
-  color: #FF69C7;
+.start-btn:active {
+  color: #ff9cde;
 }
 
+/* 곡 이름 */
 .song-jp {
+  display: block;
   font-family: 'DotGothic16', sans-serif;
   font-size: 23px;
-  font-weight: 400;
+  font-weight: 700;
   letter-spacing: 0;
   line-height: 1.6;
   white-space: nowrap;
-  text-shadow: 1px 1px 0 #e664b7;
-}
+  padding: 12px;
 
+  color: #ffffff;
+  -webkit-text-fill-color: #ffffff;
+  -webkit-text-stroke: 1px #ffffff;
+}
 @media (max-width: 360px) {
   .jp-title {
     font-size: 33px;
@@ -387,7 +404,6 @@ function startGame(songKey) {
 
   requestAnimationFrame(gameLoop);
 }
-
 /* 터치 성공 시 발광 효과의 위치를 저장 */
 function addEffect(lane, y) {
   effects.push({
@@ -423,7 +439,7 @@ function drawHeart() {
   ctx.stroke();
 }
 
-/* 터치 순간의 링과 핑크빛 효과. 별 파티클은 사용하지 않음 */
+/* 터치 순간의 링과 핑크빛 효과 */
 function drawEffects(delta) {
   for (let i = effects.length - 1; i >= 0; i--) {
     const e = effects[i];
@@ -437,10 +453,10 @@ function drawEffects(delta) {
     ctx.globalCompositeOperation = 'lighter';
     ctx.globalAlpha = alpha;
 
-    ctx.strokeStyle = '#ff9cf4';
+    ctx.strokeStyle = '#ffd6f5';
     ctx.lineWidth = Math.max(1, 4 * (1 - p));
-    ctx.shadowColor = '#ff69e8';
-    ctx.shadowBlur = 22;
+    ctx.shadowColor = '#ffb8eb';
+    ctx.shadowBlur = 12;
 
     ctx.beginPath();
     ctx.ellipse(e.x, e.y, radius, radius * 0.45, 0, 0, Math.PI * 2);
@@ -469,18 +485,18 @@ function drawEffects(delta) {
     ctx.scale(baseScale * heartScale, baseScale * heartScale);
 
     ctx.globalAlpha = alpha;
-    ctx.strokeStyle = '#ff1493';
+    ctx.strokeStyle = '#ff9fe3';
     ctx.lineWidth = 8;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
-    ctx.shadowColor = '#ff008c';
-    ctx.shadowBlur = 24 + 40 * alpha;
+    ctx.shadowColor = '#ffb3e6';
+    ctx.shadowBlur = 14 + 24 * alpha;
 
     drawHeart();
     ctx.stroke();
 
-    ctx.strokeStyle = '#fff0fb';
-    ctx.lineWidth = 2;
+    ctx.strokeStyle = '#fff5fc';
+    ctx.lineWidth = 1.5;
     ctx.shadowColor = '#ffffff';
     ctx.shadowBlur = 12;
 
@@ -565,38 +581,68 @@ function gameLoop(timestamp) {
     const noteY = judgeLineY - timeDiff * NOTE_SPEED;
     const x = note.lane * laneWidth + laneWidth / 2;
 
-    /* 판정된 하트도 아래로 계속 떨어지며 빛남 */
-    if (note.hit) {
-      if (noteY > height + 100) continue;
+  
+   /* 판정된 하트: 빠르게 커졌다가 작아지며 발광 */
+if (note.hit) {
+  if (noteY > height + 100) continue;
 
-      const s = Math.min((laneWidth - 8) / 50, 0.84);
+  const elapsed = (currentTime - note.hitAt) * 1000;
+  const duration = 180;
+  const progress = Math.max(0, Math.min(elapsed / duration, 1));
 
-      ctx.save();
-      ctx.translate(x, noteY);
-      ctx.scale(s, s);
+  // 빠르게 커진 뒤 부드럽게 원래 크기로 축소
+  const pulse = Math.sin(Math.PI * progress);
+  const s = Math.min((laneWidth - 8) / 50, 0.84);
+  const scale = s * (1 + 0.65 * pulse);
 
-      ctx.globalCompositeOperation = 'lighter';
-      ctx.strokeStyle = '#ff1493';
-      ctx.lineWidth = 8;
-      ctx.lineCap = 'round';
-      ctx.lineJoin = 'round';
-      ctx.shadowColor = '#ff008c';
-      ctx.shadowBlur = 35;
+  ctx.save();
+  ctx.translate(x, noteY);
+  ctx.scale(scale, scale);
 
-      drawHeart();
-      ctx.stroke();
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
 
-      ctx.strokeStyle = '#fff0fb';
-      ctx.lineWidth = 2;
-      ctx.shadowColor = '#ffffff';
-      ctx.shadowBlur = 12;
+  if (progress < 1) {
+   // 핑크빛 외곽 발광
+  ctx.globalAlpha = 1 - progress * 0.35;
+   ctx.strokeStyle = '#ff9fe3';
+   ctx.lineWidth = 7;
+   ctx.shadowColor = '#ff8cde';
+   ctx.shadowBlur = 28 + 24 * pulse;
+   drawHeart();
 
-      drawHeart();
-      ctx.stroke();
+   // 부드러운 연분홍색 외곽선
+   ctx.globalAlpha = 1 - progress * 0.25;
+   ctx.strokeStyle = '#ffd6f5';
+   ctx.lineWidth = 3;
+   ctx.shadowColor = '#ffb8e8';
+   ctx.shadowBlur = 18 + 15 * pulse;
+   drawHeart();
+    // 부드럽고 밝은 안쪽 선
+    ctx.globalAlpha = 1 - progress * 0.25;
+    ctx.strokeStyle = '#ffe8fa';
+    ctx.lineWidth = 3;
+    ctx.shadowColor = '#ffd6f5';
+    ctx.shadowBlur = 16 + 18 * pulse;
+    drawHeart();
 
-      ctx.restore();
-      continue;
-    }
+  } else {
+    // 애니메이션 종료: 잔상 없이 기본 하트로 복귀
+    ctx.globalAlpha = 1;
+    ctx.strokeStyle = '#ffc4f2';
+    ctx.lineWidth = 4;
+    ctx.shadowColor = '#ffb8e8';
+    ctx.shadowBlur = 10;
+    drawHeart();
+  }
+
+  ctx.restore();
+  continue;
+}
+    
+
+
+
 
     if (timeDiff < -GREAT_WINDOW) {
       note.missed = true;
@@ -615,7 +661,7 @@ function gameLoop(timestamp) {
       ctx.scale(s, s);
 
       ctx.strokeStyle = '#ffc4f2';
-      ctx.lineWidth = 7;
+      ctx.lineWidth = 4;
       ctx.lineCap = 'round';
       ctx.lineJoin = 'round';
       ctx.shadowColor = '#ff69c7';
@@ -628,7 +674,7 @@ function gameLoop(timestamp) {
     }
   }
 
-  drawEffects(delta);
+
   requestAnimationFrame(gameLoop);
 }
 
@@ -640,7 +686,6 @@ function triggerInput(lane) {
   let target = null;
   let bestDifference = Infinity;
 
-  /* 같은 레인에서 가장 가까운 노트를 찾음 */
   for (const note of activeNotes) {
     if (note.hit || note.missed || note.lane !== lane) continue;
 
@@ -652,13 +697,18 @@ function triggerInput(lane) {
     }
   }
 
+  
   if (!target) return;
 
   const hitY = judgeLineY -
     (target.time - currentTime) * NOTE_SPEED;
 
   target.hit = true;
+  target.hitAt = currentTime;
 
+
+  
+  
   if (bestDifference <= PERFECT_WINDOW) {
     perfectCount++;
     score += 1000;
@@ -670,7 +720,6 @@ function triggerInput(lane) {
   combo++;
   maxCombo = Math.max(maxCombo, combo);
 
-  addEffect(lane, hitY);
   updateHUD();
 }
 
