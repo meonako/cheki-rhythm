@@ -4,9 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>チェキ☆リズム</title>
-
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=DotGothic16&display=swap" rel="stylesheet">
-
 <style>
 * {
   box-sizing: border-box;
@@ -15,7 +13,6 @@
   user-select: none;
   -webkit-user-select: none;
 }
-
 body {
   background: #000;
   color: #fff;
@@ -27,7 +24,6 @@ body {
   overflow: hidden;
   font-family: 'Press Start 2P', cursive;
 }
-
 #game-container {
   position: relative;
   width: 100%;
@@ -39,7 +35,6 @@ body {
   overflow: hidden;
   background: #000;
 }
-
 #hud {
   height: 45px;
   flex-shrink: 0;
@@ -50,10 +45,12 @@ body {
   font-size: 9px;
   z-index: 10;
 }
-
-#score { color: #ffffff; }
-#combo { color: #fcd3f2; }
-
+#score {
+  color: #ffffff;
+}
+#combo {
+  color: #fcd3f2;
+}
 #canvas-wrapper {
   position: relative;
   flex: 1;
@@ -61,14 +58,12 @@ body {
   overflow: hidden;
   background: #000;
 }
-
 canvas {
   display: block;
   width: 100%;
   height: 100%;
   touch-action: none;
 }
-
 .screen {
   position: absolute;
   inset: 0;
@@ -81,17 +76,14 @@ canvas {
   text-align: center;
   padding: 20px;
 }
-
 .hidden {
   display: none !important;
 }
-
 /* 공통 타이틀 */
 h1 {
   line-height: 1.5;
   margin-bottom: 16px;
 }
-
 /* 시작 화면 제목 */
 .jp-title {
   font-family: 'DotGothic16', sans-serif;
@@ -100,33 +92,28 @@ h1 {
   line-height: 1.5;
   letter-spacing: 0;
   white-space: nowrap;
-
   color: #fff0fb;
   -webkit-text-fill-color: #fff0fb;
-  -webkit-text-stroke: 2.0px #fff0fb;
-
-text-shadow:
-  0 0 4px rgba(255, 240, 251, 0.6),
-  0 0 10px rgba(255, 181, 232, 0.5),
-  0 0 22px rgba(255, 105, 199, 0.4),
-  0 0 38px rgba(255, 79, 200, 0.4),
-  0 0 55px rgba(255, 79, 200, 0.2);
+  -webkit-text-stroke: 2px #fff0fb;
+  text-shadow:
+    0 0 4px rgba(255, 240, 251, 0.6),
+    0 0 10px rgba(255, 181, 232, 0.5),
+    0 0 22px rgba(255, 105, 199, 0.4),
+    0 0 38px rgba(255, 79, 200, 0.4),
+    0 0 55px rgba(255, 79, 200, 0.2);
 }
-
 .en-title {
   font-family: 'Press Start 2P', cursive;
   font-size: 25px;
   white-space: nowrap;
   letter-spacing: -1px;
 }
-
 h2 {
   font-family: 'Press Start 2P', cursive;
   font-size: 10px;
   line-height: 1.8;
   margin-bottom: 25px;
 }
-
 /* 곡 선택 제목 */
 .track-title {
   font-family: 'Press Start 2P', cursive;
@@ -135,17 +122,14 @@ h2 {
   line-height: 2;
   white-space: nowrap;
   margin-bottom: 25px;
-
   color: #fff0fb;
   -webkit-text-fill-color: #fff0fb;
   -webkit-text-stroke: 0.5px #ffd0f1;
-
   text-shadow:
     0 0 3px #ffb5e8,
     0 0 8px #ff69c7,
     0 0 16px #ff4fc8;
 }
-
 /* 버튼 기본 스타일 */
 .start-btn,
 .song-select-btn {
@@ -156,16 +140,13 @@ h2 {
   padding: 12px;
   margin: 5px;
 }
-
 .start-btn {
   font-family: 'Press Start 2P', cursive;
   font-size: 11px;
 }
-
 .start-btn:active {
   color: #ff9cde;
 }
-
 /* 곡 이름 */
 .song-jp {
   display: block;
@@ -176,152 +157,165 @@ h2 {
   line-height: 1.6;
   white-space: nowrap;
   padding: 12px;
-
   color: #ffffff;
   -webkit-text-fill-color: #ffffff;
   -webkit-text-stroke: 1px #ffffff;
+}
+/* PERFECT / GOOD 판정 표시 */
+#judgment {
+  position: absolute;
+  top: 42%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(1);
+  z-index: 15;
+  pointer-events: none;
+  font-family: 'Press Start 2P', cursive;
+  font-size: 15px;
+  font-weight: normal;
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  text-shadow:
+    0 0 5px #fff,
+    0 0 12px #ff8cde,
+    0 0 22px #ff69c7;
 }
 @media (max-width: 360px) {
   .jp-title {
     font-size: 33px;
   }
-
   .en-title {
     font-size: 19px;
   }
-
   h2 {
     font-size: 8px;
   }
-
   .track-title {
     font-size: 13px;
   }
-
   .song-jp {
     font-size: 19px;
     padding: 10px 4px;
   }
+  #judgment {
+    font-size: 12px;
+  }
 }
 </style>
 </head>
-
 <body>
 <div id="game-container">
-
   <div id="hud">
     <div>SCORE: <span id="score">000000</span></div>
     <div><span id="combo">0</span> COMBO</div>
   </div>
-
   <div id="canvas-wrapper">
     <canvas id="gameCanvas"></canvas>
-
+    <!-- 판정 표시 -->
+    <div id="judgment"></div>
     <div id="start-screen" class="screen">
       <h1 class="jp-title">チェキ☆リズム</h1>
       <h2>2026 WORK BY YUN</h2>
       <button id="start-game-btn" class="start-btn">START GAME</button>
     </div>
-
     <div id="song-select-screen" class="screen hidden">
       <h2 class="track-title">CHOOSE YOUR TRACK</h2>
       <button class="song-select-btn song-jp" data-song="Trembling">チェキ☆ラブ (JP)</button>
       <button class="song-select-btn song-jp" data-song="trembling">チェキ☆ラブ (KR)</button>
     </div>
-
     <div id="result-screen" class="screen hidden"></div>
   </div>
 </div>
-
 <script>
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 const wrapper = document.getElementById('canvas-wrapper');
-
 let width, height, laneWidth, judgeLineY;
 let dpr = 1;
-
 function resize() {
   dpr = Math.min(window.devicePixelRatio || 1, 2);
   width = wrapper.clientWidth;
   height = wrapper.clientHeight;
-
   canvas.width = Math.round(width * dpr);
   canvas.height = Math.round(height * dpr);
   canvas.style.width = width + 'px';
   canvas.style.height = height + 'px';
-
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-
   laneWidth = width / 4;
   judgeLineY = height - 105;
 }
-
 window.addEventListener('resize', resize);
 resize();
-
+/* 배경 이미지 미리 로딩 */
 const bgImage = new Image();
 let isBgLoaded = false;
-
-// 게임 시작 전에 커버 이미지 미리 로딩
-bgImage.src = './Cover2.png';
-
 bgImage.onload = () => {
   isBgLoaded = true;
 };
-
 bgImage.onerror = () => {
   isBgLoaded = false;
   console.error('커버 이미지 로딩 실패:', bgImage.src);
 };
-  
+bgImage.src = './Cover2.png';
+/* 노트 패턴 생성 */
 function generatePattern(duration, bpm, offset, seed) {
   const pattern = [];
   const beat = 60 / bpm;
   let state = seed >>> 0;
   let previousLane = -1;
   let previousDouble = -1;
-
   function rand() {
     state = (state * 1664525 + 1013904223) >>> 0;
     return state / 4294967296;
   }
-
   function pickLane(exclude = []) {
-    const choices = [0, 1, 2, 3].filter(l => !exclude.includes(l));
+    const choices = [0, 1, 2, 3].filter(
+      l => !exclude.includes(l)
+    );
     return choices[Math.floor(rand() * choices.length)];
   }
-
   let beatIndex = 0;
-
-  for (let time = offset; time < duration - 0.2; time += beat, beatIndex++) {
-    if (rand() < 0.10 && beatIndex % 4 !== 0) continue;
-
+  for (
+    let time = offset;
+    time < duration - 0.2;
+    time += beat, beatIndex++
+  ) {
+    if (rand() < 0.10 && beatIndex % 4 !== 0) {
+      continue;
+    }
     const lane = pickLane([previousLane]);
-    pattern.push({ t: time, l: lane });
+    pattern.push({
+      t: time,
+      l: lane
+    });
     previousLane = lane;
-
     if (rand() < 0.30) {
       const offbeat = time + beat / 2;
-
       if (offbeat < duration - 0.2) {
         const nextLane = pickLane([previousLane]);
-        pattern.push({ t: offbeat, l: nextLane });
+        pattern.push({
+          t: offbeat,
+          l: nextLane
+        });
         previousLane = nextLane;
       }
     }
-
     if (rand() < 0.13 && beatIndex !== previousDouble) {
-      pattern.push({ t: time, l: pickLane([lane]) });
+      pattern.push({
+        t: time,
+        l: pickLane([lane])
+      });
       previousDouble = beatIndex;
     }
   }
-
   return pattern
     .sort((a, b) => a.t - b.t || a.l - b.l)
-    .map(n => ({ time: Number(n.t.toFixed(3)), lane: n.l }));
+    .map(n => ({
+      time: Number(n.t.toFixed(3)),
+      lane: n.l
+    }));
 }
-
+/* 곡 데이터 */
 const songs = {
   Trembling: {
     src: './Trembling.mp3',
@@ -334,14 +328,11 @@ const songs = {
     pattern: generatePattern(188.69, 78.30, 0.74, 27)
   }
 };
-
 let activeSongKey = 'Trembling';
 let currentBgm = new Audio();
-
 const NOTE_SPEED = 550;
 const PERFECT_WINDOW = 0.08;
 const GREAT_WINDOW = 0.18;
-
 let isPlaying = false;
 let score = 0;
 let combo = 0;
@@ -352,32 +343,55 @@ let missCount = 0;
 let activeNotes = [];
 let effects = [];
 let lastFrameTime = 0;
-
 function updateHUD() {
   document.getElementById('score').textContent =
     String(score).padStart(6, '0');
-
   document.getElementById('combo').textContent = combo;
 }
-
+/* PERFECT / GOOD 표시 */
+let judgmentTimer = null;
+let judgmentAnimation = null;
+function showJudgment(text, color) {
+  const judgment = document.getElementById('judgment');
+  clearTimeout(judgmentTimer);
+  if (judgmentAnimation) {
+    cancelAnimationFrame(judgmentAnimation);
+  }
+  judgment.style.transition = 'none';
+  judgment.textContent = text;
+  judgment.style.color = color;
+  judgment.style.opacity = '1';
+  judgment.style.transform =
+    'translate(-50%, -50%) scale(1.2)';
+  judgmentAnimation = requestAnimationFrame(() => {
+    judgment.style.transition =
+      'transform 0.12s ease-out, opacity 0.2s ease';
+    judgment.style.transform =
+      'translate(-50%, -50%) scale(1)';
+  });
+  judgmentTimer = setTimeout(() => {
+    judgment.style.opacity = '0';
+  }, 350);
+}
+/* 곡 선택 화면 */
 function goToSongSelect() {
   isPlaying = false;
   currentBgm.pause();
-
+  document.getElementById('judgment').style.opacity = '0';
   document.getElementById('start-screen').classList.add('hidden');
   document.getElementById('song-select-screen').classList.remove('hidden');
   document.getElementById('result-screen').classList.add('hidden');
 }
-
+/* 게임 시작 */
 function startGame(songKey) {
   const song = songs[songKey];
   if (!song) return;
-
   isPlaying = false;
-
   currentBgm.pause();
   currentBgm.onended = null;
-
+  clearTimeout(judgmentTimer);
+  const judgment = document.getElementById('judgment');
+  judgment.style.opacity = '0';
   activeSongKey = songKey;
   score = 0;
   combo = 0;
@@ -386,33 +400,30 @@ function startGame(songKey) {
   greatCount = 0;
   missCount = 0;
   effects = [];
-
   activeNotes = song.pattern.map(n => ({
     ...n,
     hit: false,
     missed: false
   }));
-
   document.getElementById('start-screen').classList.add('hidden');
   document.getElementById('song-select-screen').classList.add('hidden');
   document.getElementById('result-screen').classList.add('hidden');
-
   updateHUD();
-
-
+  /* 곡에 맞는 배경 이미지 설정 */
+  if (bgImage.src !== new URL(song.bg, document.baseURI).href) {
+    isBgLoaded = false;
+    bgImage.src = song.bg;
+  }
   currentBgm = new Audio(song.src);
   currentBgm.onended = endGame;
-
   isPlaying = true;
   lastFrameTime = 0;
-
   currentBgm.play().catch(err => {
     console.error('Audio error:', err);
   });
-
   requestAnimationFrame(gameLoop);
 }
-/* 터치 성공 시 발광 효과의 위치를 저장 */
+/* 터치 성공 시 발광 효과 위치 저장 */
 function addEffect(lane, y) {
   effects.push({
     x: lane * laneWidth + laneWidth / 2,
@@ -421,77 +432,62 @@ function addEffect(lane, y) {
     duration: 480
   });
 }
-
 /* 하트 모양 */
 function drawHeart() {
   ctx.beginPath();
-
   ctx.moveTo(0, -28);
   ctx.lineTo(0, -8);
-
   ctx.moveTo(0, -8);
   ctx.bezierCurveTo(-12, -23, -37, -22, -37, -3);
   ctx.bezierCurveTo(-37, 10, -17, 25, 0, 38);
   ctx.bezierCurveTo(17, 25, 37, 10, 37, -3);
   ctx.bezierCurveTo(37, -22, 12, -23, 0, -8);
-
   ctx.moveTo(0, 24);
   ctx.lineTo(0, 43);
-
   ctx.moveTo(-47, 3);
   ctx.lineTo(-25, 3);
-
   ctx.moveTo(25, 3);
   ctx.lineTo(47, 3);
-
   ctx.stroke();
 }
-
 /* 터치 순간의 링과 핑크빛 효과 */
 function drawEffects(delta) {
   for (let i = effects.length - 1; i >= 0; i--) {
     const e = effects[i];
     e.age += delta;
-
     const p = Math.min(e.age / e.duration, 1);
     const alpha = 1 - p;
     const radius = 10 + p * 68;
-
     ctx.save();
     ctx.globalCompositeOperation = 'lighter';
     ctx.globalAlpha = alpha;
-
     ctx.strokeStyle = '#ffd6f5';
     ctx.lineWidth = Math.max(1, 4 * (1 - p));
     ctx.shadowColor = '#ffb8eb';
     ctx.shadowBlur = 12;
-
     ctx.beginPath();
-    ctx.ellipse(e.x, e.y, radius, radius * 0.45, 0, 0, Math.PI * 2);
+    ctx.ellipse(
+      e.x, e.y, radius, radius * 0.45,
+      0, 0, Math.PI * 2
+    );
     ctx.stroke();
-
     const glow = ctx.createRadialGradient(
       e.x, e.y, 0,
       e.x, e.y, 38 * (1 - p) + 3
     );
-
     glow.addColorStop(0, `rgba(255,255,255,${alpha})`);
     glow.addColorStop(0.3, `rgba(255,100,225,${alpha * 0.8})`);
     glow.addColorStop(1, 'rgba(255,80,220,0)');
-
     ctx.fillStyle = glow;
     ctx.beginPath();
     ctx.arc(e.x, e.y, 42 * (1 - p) + 3, 0, Math.PI * 2);
     ctx.fill();
-
     const pulse = Math.sin(Math.PI * p);
     const heartScale = 1 + 0.42 * pulse;
     const baseScale = Math.min((laneWidth - 8) / 50, 0.84);
-
     ctx.save();
     ctx.translate(e.x, e.y);
     ctx.scale(baseScale * heartScale, baseScale * heartScale);
-
     ctx.globalAlpha = alpha;
     ctx.strokeStyle = '#ff9fe3';
     ctx.lineWidth = 8;
@@ -499,45 +495,32 @@ function drawEffects(delta) {
     ctx.lineJoin = 'round';
     ctx.shadowColor = '#ffb3e6';
     ctx.shadowBlur = 14 + 24 * alpha;
-
     drawHeart();
-    ctx.stroke();
-
     ctx.strokeStyle = '#fff5fc';
     ctx.lineWidth = 1.5;
     ctx.shadowColor = '#ffffff';
     ctx.shadowBlur = 12;
-
     drawHeart();
-    ctx.stroke();
-
     ctx.restore();
     ctx.restore();
-
     if (e.age >= e.duration) {
       effects.splice(i, 1);
     }
   }
 }
-
+/* 게임 화면 갱신 */
 function gameLoop(timestamp) {
   if (!isPlaying) return;
-
   const delta = lastFrameTime
     ? Math.min(timestamp - lastFrameTime, 40)
     : 16;
-
   lastFrameTime = timestamp;
-
   if (currentBgm.ended) {
     endGame();
     return;
   }
-
   const currentTime = currentBgm.currentTime;
-
   ctx.clearRect(0, 0, width, height);
-
   /* 배경 이미지 */
   if (isBgLoaded && bgImage.complete && bgImage.naturalWidth) {
     ctx.drawImage(bgImage, 0, 0, width, height);
@@ -547,111 +530,91 @@ function gameLoop(timestamp) {
     ctx.fillStyle = '#000';
     ctx.fillRect(0, 0, width, height);
   }
-
   /* 4개 레인 */
   ctx.strokeStyle = 'rgba(120,210,255,0.13)';
   ctx.lineWidth = 1;
-
   for (let i = 1; i < 4; i++) {
     ctx.beginPath();
     ctx.moveTo(i * laneWidth, 0);
     ctx.lineTo(i * laneWidth, height);
     ctx.stroke();
   }
-
   /* 판정선 */
   ctx.save();
   ctx.shadowColor = '#ff69c7';
   ctx.shadowBlur = 13;
   ctx.strokeStyle = 'rgba(255,160,245,0.95)';
   ctx.lineWidth = 4;
-
   ctx.beginPath();
   ctx.moveTo(0, judgeLineY);
   ctx.lineTo(width, judgeLineY);
   ctx.stroke();
-
   ctx.shadowBlur = 0;
   ctx.strokeStyle = 'rgba(255,255,255,0.9)';
   ctx.lineWidth = 1;
-
   ctx.beginPath();
   ctx.moveTo(0, judgeLineY);
   ctx.lineTo(width, judgeLineY);
   ctx.stroke();
   ctx.restore();
-
   /* 노트 */
   for (const note of activeNotes) {
     if (note.missed) continue;
-
     const timeDiff = note.time - currentTime;
     const noteY = judgeLineY - timeDiff * NOTE_SPEED;
     const x = note.lane * laneWidth + laneWidth / 2;
-
-  
-   /* 판정된 하트: 빠르게 커졌다가 작아지며 발광 */
-if (note.hit) {
-  if (noteY > height + 100) continue;
-
-  const elapsed = (currentTime - note.hitAt) * 1000;
-  const duration = 180;
-  const progress = Math.max(0, Math.min(elapsed / duration, 1));
-
-  // 빠르게 커진 뒤 부드럽게 원래 크기로 축소
-  const pulse = Math.sin(Math.PI * progress);
-  const s = Math.min((laneWidth - 8) / 50, 0.84);
-  const scale = s * (1 + 0.65 * pulse);
-
-  ctx.save();
-  ctx.translate(x, noteY);
-  ctx.scale(scale, scale);
-
-  ctx.lineCap = 'round';
-  ctx.lineJoin = 'round';
-
-  if (progress < 1) {
-   // 핑크빛 외곽 발광
-  ctx.globalAlpha = 1 - progress * 0.35;
-   ctx.strokeStyle = '#ff9fe3';
-   ctx.lineWidth = 7;
-   ctx.shadowColor = '#ff8cde';
-   ctx.shadowBlur = 28 + 24 * pulse;
-   drawHeart();
-
-   // 부드러운 연분홍색 외곽선
-   ctx.globalAlpha = 1 - progress * 0.25;
-   ctx.strokeStyle = '#ffd6f5';
-   ctx.lineWidth = 3;
-   ctx.shadowColor = '#ffb8e8';
-   ctx.shadowBlur = 18 + 15 * pulse;
-   drawHeart();
-    // 부드럽고 밝은 안쪽 선
-    ctx.globalAlpha = 1 - progress * 0.25;
-    ctx.strokeStyle = '#ffe8fa';
-    ctx.lineWidth = 3;
-    ctx.shadowColor = '#ffd6f5';
-    ctx.shadowBlur = 16 + 18 * pulse;
-    drawHeart();
-
-  } else {
-    // 애니메이션 종료: 잔상 없이 기본 하트로 복귀
-    ctx.globalAlpha = 1;
-    ctx.strokeStyle = '#ffc4f2';
-    ctx.lineWidth = 4;
-    ctx.shadowColor = '#ffb8e8';
-    ctx.shadowBlur = 10;
-    drawHeart();
-  }
-
-  ctx.restore();
-  continue;
-}
-    
-
-
-
-
+    /* 판정된 하트 */
+    if (note.hit) {
+      if (noteY > height + 100) continue;
+      const elapsed = (currentTime - note.hitAt) * 1000;
+      const duration = 180;
+      const progress = Math.max(
+        0,
+        Math.min(elapsed / duration, 1)
+      );
+      const pulse = Math.sin(Math.PI * progress);
+      const s = Math.min((laneWidth - 8) / 50, 0.84);
+      const scale = s * (1 + 0.65 * pulse);
+      ctx.save();
+      ctx.translate(x, noteY);
+      ctx.scale(scale, scale);
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      if (progress < 1) {
+        /* 핑크빛 외곽 발광 */
+        ctx.globalAlpha = 1 - progress * 0.35;
+        ctx.strokeStyle = '#ff9fe3';
+        ctx.lineWidth = 7;
+        ctx.shadowColor = '#ff8cde';
+        ctx.shadowBlur = 28 + 24 * pulse;
+        drawHeart();
+        /* 부드러운 연분홍색 외곽선 */
+        ctx.globalAlpha = 1 - progress * 0.25;
+        ctx.strokeStyle = '#ffd6f5';
+        ctx.lineWidth = 3;
+        ctx.shadowColor = '#ffb8e8';
+        ctx.shadowBlur = 18 + 15 * pulse;
+        drawHeart();
+        /* 밝은 안쪽 선 */
+        ctx.globalAlpha = 1 - progress * 0.25;
+        ctx.strokeStyle = '#ffe8fa';
+        ctx.lineWidth = 3;
+        ctx.shadowColor = '#ffd6f5';
+        ctx.shadowBlur = 16 + 18 * pulse;
+        drawHeart();
+      } else {
+        /* 애니메이션 종료 후 기본 하트 */
+        ctx.globalAlpha = 1;
+        ctx.strokeStyle = '#ffc4f2';
+        ctx.lineWidth = 4;
+        ctx.shadowColor = '#ffb8e8';
+        ctx.shadowBlur = 10;
+        drawHeart();
+      }
+      ctx.restore();
+      continue;
+    }
+    /* MISS 판정 */
     if (timeDiff < -GREAT_WINDOW) {
       note.missed = true;
       combo = 0;
@@ -659,93 +622,74 @@ if (note.hit) {
       updateHUD();
       continue;
     }
-
     /* 일반 하트 */
     if (noteY > -100 && noteY < height + 100) {
       const s = Math.min((laneWidth - 8) / 50, 0.84);
-
       ctx.save();
       ctx.translate(x, noteY);
       ctx.scale(s, s);
-
       ctx.strokeStyle = '#ffc4f2';
       ctx.lineWidth = 4;
       ctx.lineCap = 'round';
       ctx.lineJoin = 'round';
       ctx.shadowColor = '#ff69c7';
       ctx.shadowBlur = 18;
-
       drawHeart();
-      ctx.stroke();
-
       ctx.restore();
     }
   }
-
-
   requestAnimationFrame(gameLoop);
 }
-
 /* 입력 판정 */
 function triggerInput(lane) {
   if (!isPlaying) return;
-
   const currentTime = currentBgm.currentTime;
   let target = null;
   let bestDifference = Infinity;
-
   for (const note of activeNotes) {
-    if (note.hit || note.missed || note.lane !== lane) continue;
-
+    if (note.hit || note.missed || note.lane !== lane) {
+      continue;
+    }
     const difference = Math.abs(note.time - currentTime);
-
-    if (difference <= GREAT_WINDOW && difference < bestDifference) {
+    if (
+      difference <= GREAT_WINDOW &&
+      difference < bestDifference
+    ) {
       target = note;
       bestDifference = difference;
     }
   }
-
-  
   if (!target) return;
-
   const hitY = judgeLineY -
     (target.time - currentTime) * NOTE_SPEED;
-
   target.hit = true;
   target.hitAt = currentTime;
-
-
-  
-  
+  /* PERFECT / GOOD 판정 표시 */
   if (bestDifference <= PERFECT_WINDOW) {
     perfectCount++;
     score += 1000;
+    showJudgment('PERFECT', '#fff0fb');
   } else {
     greatCount++;
     score += 500;
+    showJudgment('GOOD', '#ff9fe3');
   }
-
   combo++;
   maxCombo = Math.max(maxCombo, combo);
-
   updateHUD();
 }
-
+/* 결과 화면 */
 function endGame() {
   if (!isPlaying) return;
-
   isPlaying = false;
   currentBgm.pause();
-
   const totalNotes = songs[activeSongKey].pattern.length;
   const accuracy = totalNotes
     ? score / (totalNotes * 1000) * 100
     : 0;
-
   let rank = 'F';
   let message = 'STAGE FAILED... TRY AGAIN!';
   let color = '#ff4444';
-
   if (accuracy >= 90) {
     rank = 'S';
     message = 'AMAZING! PERFECT RHYTHM!';
@@ -763,61 +707,85 @@ function endGame() {
     message = 'CLEAR!';
     color = '#ff8800';
   }
-
   const result = document.getElementById('result-screen');
-
   result.innerHTML = `
-    <div style="font-family:'Press Start 2P',cursive;font-size:65px;color:white;text-shadow:0 0 20px ${color};margin-bottom:10px">${rank}</div>
-    <div style="font-size:9px;color:#fcd3f2;line-height:2;margin-bottom:20px">${message}</div>
-    <div style="font-size:10px;line-height:2.5;text-align:left;margin-bottom:20px">
-      <p style="color:#00fff2">PERFECT : ${perfectCount}</p>
-      <p style="color:#fcd3f2">GREAT : ${greatCount}</p>
-      <p style="color:#ff4444">MISS : ${missCount}</p>
-      <hr style="border:0;border-top:1px solid #555;margin:8px 0">
+    <div style="
+      font-family:'Press Start 2P',cursive;
+      font-size:65px;
+      color:white;
+      text-shadow:0 0 20px ${color};
+      margin-bottom:10px
+    ">${rank}</div>
+    <div style="
+      font-size:9px;
+      color:#fcd3f2;
+      line-height:2;
+      margin-bottom:20px
+    ">${message}</div>
+    <div style="
+      font-size:10px;
+      line-height:2.5;
+      text-align:left;
+      margin-bottom:20px
+    ">
+      <p style="color:#00fff2">
+        PERFECT : ${perfectCount}
+      </p>
+      <p style="color:#fcd3f2">
+        GREAT : ${greatCount}
+      </p>
+      <p style="color:#ff4444">
+        MISS : ${missCount}
+      </p>
+      <hr style="
+        border:0;
+        border-top:1px solid #555;
+        margin:8px 0
+      ">
       <p>MAX COMBO : ${maxCombo}</p>
     </div>
-    <button id="retry-btn" class="start-btn">RETRY</button>
-    <button id="select-song-btn" class="start-btn">SELECT SONG</button>
+    <button id="retry-btn" class="start-btn">
+      RETRY
+    </button>
+    <button id="select-song-btn" class="start-btn">
+      SELECT SONG
+    </button>
   `;
-
   result.classList.remove('hidden');
-
   document.getElementById('retry-btn').onclick =
     () => startGame(activeSongKey);
-
   document.getElementById('select-song-btn').onclick =
     goToSongSelect;
 }
-
 /* 시작 및 곡 선택 */
 document.getElementById('start-game-btn')
   .addEventListener('click', goToSongSelect);
-
 document.querySelectorAll('.song-select-btn').forEach(btn => {
-  btn.addEventListener('click', () => startGame(btn.dataset.song));
+  btn.addEventListener('click', () => {
+    startGame(btn.dataset.song);
+  });
 });
-
 /* 키보드 입력 */
-const keyMap = { d: 0, f: 1, j: 2, k: 3 };
-
+const keyMap = {
+  d: 0,
+  f: 1,
+  j: 2,
+  k: 3
+};
 document.addEventListener('keydown', e => {
   const key = e.key.toLowerCase();
   if (!(key in keyMap)) return;
-
   e.preventDefault();
   triggerInput(keyMap[key]);
 });
-
 /* 화면 터치 입력 */
 canvas.addEventListener('pointerdown', e => {
   if (!isPlaying) return;
-
   e.preventDefault();
-
   const rect = canvas.getBoundingClientRect();
-  const x = (e.clientX - rect.left) * (width / rect.width);
+  const x = (e.clientX - rect.left) *
+    (width / rect.width);
   const lane = Math.floor(x / laneWidth);
-
   if (lane >= 0 && lane < 4) {
     triggerInput(lane);
   }
