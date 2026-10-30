@@ -564,56 +564,58 @@ function gameLoop(timestamp) {
     const noteY = judgeLineY - timeDiff * NOTE_SPEED;
     const x = note.lane * laneWidth + laneWidth / 2;
     /* 판정된 하트 */
-    if (note.hit) {
-      if (noteY > height + 100) continue;
-      const elapsed = (currentTime - note.hitAt) * 1000;
-      const duration = 180;
-      const progress = Math.max(
-        0,
-        Math.min(elapsed / duration, 1)
-      );
-      const pulse = Math.sin(Math.PI * progress);
-      const s = Math.min((laneWidth - 8) / 50, 0.84);
-      const scale = s * (1 + 0.65 * pulse);
-      ctx.save();
-      ctx.translate(x, noteY);
-      ctx.scale(scale, scale);
-      ctx.lineCap = 'round';
-      ctx.lineJoin = 'round';
-      if (progress < 1) {
-        /* 핑크빛 외곽 발광 */
-        ctx.globalAlpha = 1 - progress * 0.35;
-        ctx.strokeStyle = '#ff9fe3';
-        ctx.lineWidth = 7;
-        ctx.shadowColor = '#ff8cde';
-        ctx.shadowBlur = 28 + 24 * pulse;
-        drawHeart();
-        /* 부드러운 연분홍색 외곽선 */
-        ctx.globalAlpha = 1 - progress * 0.25;
-        ctx.strokeStyle = '#ffd6f5';
-        ctx.lineWidth = 3;
-        ctx.shadowColor = '#ffb8e8';
-        ctx.shadowBlur = 18 + 15 * pulse;
-        drawHeart();
-        /* 밝은 안쪽 선 */
-        ctx.globalAlpha = 1 - progress * 0.25;
-        ctx.strokeStyle = '#ffe8fa';
-        ctx.lineWidth = 3;
-        ctx.shadowColor = '#ffd6f5';
-        ctx.shadowBlur = 16 + 18 * pulse;
-        drawHeart();
-      } else {
-        /* 애니메이션 종료 후 기본 하트 */
-        ctx.globalAlpha = 1;
-        ctx.strokeStyle = '#ffc4f2';
-        ctx.lineWidth = 4;
-        ctx.shadowColor = '#ffb8e8';
-        ctx.shadowBlur = 10;
-        drawHeart();
-      }
-      ctx.restore();
-      continue;
-    }
+    /* 판정된 하트: 연핑크 발광 */
+if (note.hit) {
+  if (noteY > height + 100) continue;
+
+  const elapsed = (currentTime - note.hitAt) * 1000;
+  const duration = 180;
+  const progress = Math.max(0, Math.min(elapsed / duration, 1));
+
+  // 처음에는 커졌다가 자연스럽게 원래 크기로 복귀
+  const pulse = Math.sin(Math.PI * progress);
+  const s = Math.min((laneWidth - 8) / 50, 0.84);
+  const scale = s * (1 + 0.45 * pulse);
+
+  ctx.save();
+  ctx.translate(x, noteY);
+  ctx.scale(scale, scale);
+
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+
+  if (progress < 1) {
+    // 하트 외곽에만 은은한 연핑크빛 발광
+    ctx.globalAlpha = 0.35 + 0.35 * pulse;
+    ctx.strokeStyle = '#ffd6f5';
+    ctx.lineWidth = 4;
+    ctx.shadowColor = '#ffb8e8';
+    ctx.shadowBlur = 12 + 16 * pulse;
+
+    drawHeart();
+
+    // 하트 선은 밝고 투명한 연핑크로
+    ctx.globalAlpha = 0.45 + 0.25 * pulse;
+    ctx.strokeStyle = '#ffe8fa';
+    ctx.lineWidth = 2.5;
+    ctx.shadowBlur = 3 + 5 * pulse;
+
+    drawHeart();
+
+  } else {
+    // 발광 종료: 원래 하트로 복귀
+    ctx.globalAlpha = 1;
+    ctx.strokeStyle = '#ffc4f2';
+    ctx.lineWidth = 4;
+    ctx.shadowColor = '#ffb8e8';
+    ctx.shadowBlur = 10;
+
+    drawHeart();
+  }
+
+  ctx.restore();
+  continue;
+}
     /* MISS 판정 */
     if (timeDiff < -GREAT_WINDOW) {
       note.missed = true;
