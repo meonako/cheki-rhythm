@@ -690,7 +690,7 @@ function endGame() {
   let rank = 'F';
   let message = 'STAGE FAILED... TRY AGAIN!';
   let color = '#ff4444';
-  if (perfectCount >= 107 && greatCount >= 38) {
+  if (missCount === 0) {dk
     rank = 'S';
     message = 'AMAZING! PERFECT RHYTHM!';
     color = '#ffd700';
@@ -732,7 +732,7 @@ function endGame() {
         PERFECT : ${perfectCount}
       </p>
       <p style="color:#fcd3f2">
-        GREAT : ${greatCount}
+        GOOD : ${greatCount}
       </p>
       <p style="color:#ff4444">
         MISS : ${missCount}
